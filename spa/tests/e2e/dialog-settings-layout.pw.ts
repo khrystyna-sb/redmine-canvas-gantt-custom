@@ -15,6 +15,7 @@ const japaneseLabels = {
   label_show_start_date_only: '開始日のみのチケット',
   label_show_due_date_only: '期日のみのチケット',
   label_toggle_task_titles: 'チケット名',
+  label_task_color: '色分け',
   label_toggle_task_bar_dates: 'タスクバーの日付',
   label_toggle_hierarchy_lines: '階層線',
   label_issue_dialog_settings: 'チケットダイアログ',
@@ -57,7 +58,7 @@ for (const width of [1280, 375]) {
       expect(menuBounds!.x + menuBounds!.width).toBeLessThanOrEqual(width);
 
       const selectCount = await menu.locator('select').count();
-      expect(selectCount).toBe(6);
+      expect(selectCount).toBe(7);
       for (let index = 0; index < selectCount; index += 1) {
         const select = menu.locator('select').nth(index);
         const selectBounds = await select.boundingBox();

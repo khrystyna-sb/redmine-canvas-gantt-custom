@@ -187,7 +187,6 @@ export const WorkloadCanvasPanel: React.FC<WorkloadCanvasPanelProps> = ({
         const width = viewportElement?.clientWidth ?? containerElement?.clientWidth ?? 0;
         const height = viewportElement?.clientHeight ?? Math.max(0, (containerElement?.clientHeight ?? 0) - WORKLOAD_HEADER_HEIGHT);
         if (width > 0 && height > 0) {
-            setPlotWidth(width);
             const ctx = canvasRef.current.getContext('2d');
             resizeCanvasForDpr(canvasRef.current, ctx, width, height);
         }
@@ -199,6 +198,7 @@ export const WorkloadCanvasPanel: React.FC<WorkloadCanvasPanelProps> = ({
         
         const resizeObserver = new ResizeObserver(() => {
             updateCanvasSize();
+            setPlotWidth(viewportRef.current?.clientWidth ?? 0);
             updateRange();
             renderCurrentState();
         });

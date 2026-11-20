@@ -191,7 +191,7 @@ describe('GanttContainer Resize', () => {
         await waitFor(() => {
             const taskArgs = taskRenderMock.mock.calls.at(-1) ?? [];
             const overlayArgs = overlayRenderMock.mock.calls.at(-1) ?? [];
-            const taskToday = taskArgs.at(-1);
+            const taskToday = taskArgs.at(-2);
             const overlayToday = (overlayArgs[0] as { today?: number } | undefined)?.today;
 
             expect(taskToday).toEqual(overlayToday);

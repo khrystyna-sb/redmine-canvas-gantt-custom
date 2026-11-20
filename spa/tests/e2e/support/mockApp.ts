@@ -8,6 +8,7 @@ type RawTask = {
   start_date: string;
   due_date: string;
   ratio_done: number;
+  estimated_hours?: number;
   status_id: number;
   status_name: string;
   assigned_to_id?: number;
@@ -297,6 +298,12 @@ export const setupMockApp = async (page: Page, options?: SetupOptions) => {
       userId: 1,
       i18n: {
         field_subject: 'Task Name',
+        label_workload_planned: 'Planned',
+        label_workload_actual: 'Actual',
+        label_workload_capacity: 'Capacity',
+        label_workload_planned_overload: 'Plan overload',
+        label_workload_actual_overload: 'Actual overload',
+        label_workload_daily_details: 'Daily workload details',
         field_status: 'Status',
         field_assigned_to: 'Assignee',
         field_start_date: 'Start Date',

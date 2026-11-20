@@ -190,5 +190,20 @@ test.describe('planned and actual workload comparison', () => {
     await page.getByTestId('workload-menu-button').click();
     await page.getByLabel('Show Workload Pane').check();
     await expect(page.getByTestId('workload-sidebar-total-2')).toContainText('A 18.0h');
+
+    const workloadMenu = page.getByTestId('workload-menu');
+    await workloadMenu.getByRole('combobox', { name: 'Actual hours' }).selectOption('hide');
+    await workloadMenu.getByRole('combobox', { name: 'Workload view' }).selectOption('heatmap');
+    await expect(page.getByTestId('workload-heatmap-dates')).toBeVisible();
+    await expect(page.getByTestId('workload-sidebar-row-2')).toHaveCount(0);
+    await expect(page.getByTestId('workload-sidebar-total-3')).toHaveText('P 8.0h');
+
+    await page.reload();
+    await page.getByRole('button', { name: 'Today', exact: true }).click();
+    await page.getByTestId('workload-menu-button').click();
+    await page.getByLabel('Show Workload Pane').check();
+    await expect(workloadMenu.getByRole('combobox', { name: 'Actual hours' })).toHaveValue('hide');
+    await expect(workloadMenu.getByRole('combobox', { name: 'Workload view' })).toHaveValue('heatmap');
+    await expect(page.getByTestId('workload-sidebar-total-3')).toHaveText('P 8.0h');
   });
 });

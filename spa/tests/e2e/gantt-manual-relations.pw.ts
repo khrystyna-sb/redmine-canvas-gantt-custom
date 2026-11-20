@@ -367,7 +367,7 @@ test('auto-applies a dragged relation locally in manual mode without an API writ
     useUIStore.getState().setAutoApplyDefaultRelation(true);
     useUIStore.getState().setDefaultRelationType('relates');
     const store = useTaskStore.getState();
-    store.updateViewport({ scrollX: store.viewport.scrollX + 1000 });
+    store.updateViewport({ startDate: Date.UTC(2026, 0, 25), scrollX: 0 });
     useTaskStore.getState().setHoveredTask('201');
   });
   const targetStart = page.getByTestId('task-resize-handle-start-201');
