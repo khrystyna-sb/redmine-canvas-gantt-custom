@@ -2,7 +2,7 @@
 
 # Workload Pane
 
-Reference: HEAD `d1d910fd0a0ea6f02d34d78fa68f1e3abe61cb22`, implementation as of 2026-11-13 (plugin 0.20.0). The specification index records the public manual's current target version.
+Reference: HEAD `d1d910fd0a0ea6f02d34d78fa68f1e3abe61cb22`, implementation as of 2026-11-13 (plugin 0.20.0). The specification index records the public manual's current target version. The custom-build behaviors described here were added in commits `c495c3c` and `91a7dbc` on 2026-11-20.
 
 <a id="目的と範囲"></a>
 

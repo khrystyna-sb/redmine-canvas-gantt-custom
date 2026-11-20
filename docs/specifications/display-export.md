@@ -2,7 +2,7 @@
 
 # Display Settings and Export
 
-Reference: development HEAD `d1d910fd0a0ea6f02d34d78fa68f1e3abe61cb22` (2026-11-13, code 0.20.0). This document records that development implementation; see the specification index for the public manual's current target.
+Reference: development HEAD `d1d910fd0a0ea6f02d34d78fa68f1e3abe61cb22` (2026-11-13, code 0.20.0). This document records that development implementation; see the specification index for the public manual's current target. The custom status color behavior was added in commit `54752ee` on 2026-11-20.
 
 <a id="表示と既定値"></a>
 

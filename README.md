@@ -2,7 +2,7 @@
 
 # Redmine Canvas Gantt
 
-A fast, Canvas-based Gantt chart plugin for Redmine 6.0, 6.1, and 7.0. This README and the user manual describe plugin release v0.18.0.
+Canvas Gantt Custom `0.20.0-custom.1` extends the upstream Canvas-based Gantt plugin for Redmine 6.0, 6.1, and 7.0. It is based on upstream commit `b272f91`. The linked public manuals describe upstream releases.
 
 [English user manual](https://tiohsa.github.io/redmine_canvas_gantt/en/) · [日本語マニュアル](https://tiohsa.github.io/redmine_canvas_gantt/ja/) · [Developer guide](spa/README.md)
 
@@ -41,6 +41,14 @@ View and edit project issues on a Gantt chart, with a task list beside the timel
 - Compare schedules with baselines, review workload, or measure work with the Work Timer.
 - Adjust chart presentation and export PNG or CSV.
 
+## Custom features
+
+- **Color by Status** uses Redmine status IDs, including custom statuses. The legend lets you change each color. Gantt PNG exports use the current palette.
+- **Workload Heatmap** shows planned hours by assignee and date with capacity-based colors. Set a daily threshold for each assignee in the Workload menu.
+- **Hide Actual** hides time-entry bars, totals, and related indicators while planned hours continue to be calculated.
+
+The browser remembers these preferences. See the [changelog](CHANGELOG.md) and [verification results](TESTING.md).
+
 ## Demo
 
 ![Canvas Gantt demo: schedule editing and dependency creation](./docs/demo-current.gif)
@@ -65,18 +73,17 @@ No database migration is required. Access requires `view_canvas_gantt`; baseline
 
 ## Installation
 
-For a basic installation, clone the v0.18.0 release into Redmine's `plugins/` directory, then restart Redmine:
-
-```sh
-cd /path/to/redmine/plugins
-git clone --branch v0.18.0 --depth 1 https://github.com/tiohsa/redmine_canvas_gantt.git
-```
-
-Enable the REST API and the Canvas Gantt project module, then grant `view_canvas_gantt` to the appropriate roles.
+1. Extract the custom ZIP to a staging location. Confirm the top-level directory is `redmine_canvas_gantt` and contains `init.rb` and `assets/build/.vite/manifest.json`.
+2. Place that directory in `<redmine>/plugins/` and restart Redmine. The ZIP includes the compiled frontend. This plugin version needs no database migration.
+3. Enable the REST API and the Canvas Gantt project module. Grant `view_canvas_gantt` to the appropriate roles and open Canvas Gantt from the project menu.
 
 ### Upgrade
 
-Back up Redmine and replace the plugin files with the selected release, then restart Redmine and review role permissions. Ordinary upgrades require no database migration.
+Back up the Redmine database and the existing plugin directory. Stop Redmine, move the existing `redmine_canvas_gantt` directory outside `plugins/`, and put the extracted directory in its place. Restart Redmine so it refreshes plugin assets. Check the registered plugin version, permissions, the Gantt view, and PNG export on a test project before broader use.
+
+### Rollback
+
+Stop Redmine and move the custom plugin directory outside `plugins/`. Restore the previous plugin directory at the original path and restart Redmine. Keep the existing Redmine plugin settings to preserve saved baselines. Run the uninstall task only for permanent removal.
 
 ### Uninstall
 

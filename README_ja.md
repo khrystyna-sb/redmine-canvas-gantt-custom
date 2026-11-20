@@ -2,7 +2,7 @@
 
 # Redmine Canvas Gantt
 
-Redmine 6.0、6.1、7.0 向けの高速な Canvas ベースのガントチャートプラグインです。この README とユーザーマニュアルはプラグイン v0.18.0 の内容です。
+Canvas Gantt Custom `0.20.0-custom.1` は、Redmine 6.0、6.1、7.0 向けのガントチャートプラグインを拡張したものです。上流のコミット `b272f91` をベースとしています。リンク先の公開マニュアルは上流版を対象としています。
 
 [日本語マニュアル](https://tiohsa.github.io/redmine_canvas_gantt/ja/) · [English user manual](https://tiohsa.github.io/redmine_canvas_gantt/en/) · [開発者向けガイド](spa/README_ja.md)
 
@@ -41,6 +41,14 @@ Canvas Gantt は、Redmine のチケット、権限、保存済みクエリを�
 - ベースラインで日程を比較し、ワークロードを確認したり、作業時間タイマーで作業を計測したりできます。
 - チャートの表示を調整し、PNG または CSV に出力できます。
 
+## カスタム機能
+
+- **ステータスの色分け**では、カスタムステータスを含む各ステータスの色を変更できます。PNG 出力にも現在の色が反映されます。
+- **ワークロードのヒートマップ**では、担当者と日付ごとの予定工数を表示します。担当者ごとに容量を設定できます。
+- **実績を非表示**にすると実績のバー、合計、超過表示が消え、予定工数は引き続き計算されます。
+
+設定はブラウザーに保存されます。バージョンごとの変更は[変更履歴](CHANGELOG.md)を参照してください。
+
 ## デモ
 
 ![Canvas Gantt のデモ: 日程編集と依存関係の作成](./docs/demo-current.gif)
@@ -65,18 +73,17 @@ DB マイグレーションは不要です。チャートの表示には `view_c
 
 ## インストール
 
-v0.18.0 を Redmine の `plugins/` に clone して Redmine を再起動します。
-
-```sh
-cd /path/to/redmine/plugins
-git clone --branch v0.18.0 --depth 1 https://github.com/tiohsa/redmine_canvas_gantt.git
-```
-
-REST API とプロジェクトの Canvas Gantt モジュールを有効にし、利用ロールに `view_canvas_gantt` を付与します。
+1. カスタム ZIP を展開し、`redmine_canvas_gantt` フォルダーに `init.rb` と `assets/build/.vite/manifest.json` があることを確認します。
+2. このフォルダーを Redmine の `plugins/` に配置し、Redmine を再起動します。ビルド済みアセットが含まれています。DB マイグレーションは不要です。
+3. REST API とプロジェクトの Canvas Gantt モジュールを有効にし、利用ロールに `view_canvas_gantt` を付与します。
 
 ### アップグレード
 
-Redmine をバックアップしてプラグインファイルを更新し、再起動後にロール権限を確認します。通常の更新で DB マイグレーションは不要です。
+Redmine のデータベースと既存のプラグインをバックアップします。Redmine を停止し、既存のディレクトリを `plugins/` の外へ移してから、展開したディレクトリに置き換えます。再起動後、テスト用プロジェクトでバージョン、権限、ガント表示、PNG 出力を確認します。
+
+### ロールバック
+
+Redmine を停止し、カスタム版を `plugins/` の外へ移動します。旧版を元の場所に戻して再起動します。ベースラインを保持するため、プラグイン設定を残します。アンインストールタスクは完全に削除する場合にのみ実行します。
 
 ### アンインストール
 
