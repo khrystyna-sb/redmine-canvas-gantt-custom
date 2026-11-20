@@ -31,6 +31,7 @@ export const WorkloadSidebar: React.FC<WorkloadSidebarProps> = ({
     const {
         workloadData,
         actualStatus,
+        workloadViewMode,
         resolveNextOverloadBar,
         resetHistogramSelectionCycle,
         resolveNextHistogramTask,
@@ -143,6 +144,7 @@ export const WorkloadSidebar: React.FC<WorkloadSidebarProps> = ({
                                         <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} aria-label={`${i18n.t('label_workload_actual')} ${actualStatus === 'ready' ? `${assignee.actualTotal.toFixed(1)}h` : '—'}`}>{i18n.t('label_workload_actual_short')} {actualStatus === 'ready' ? `${assignee.actualTotal.toFixed(1)}h` : '—'}</div>
                                     </div>
                                     {(['planned', 'actual'] as const).map(series => {
+                                        if (series === 'actual' && workloadViewMode === 'heatmap') return null;
                                         const hasOverload = Array.from(assignee.dailyWorkloads.values()).some(d => series === 'planned' ? d.isPlannedOverload : actualStatus === 'ready' && d.isActualOverload);
                                         const overloadCycleInfo = getOverloadCycleInfo(assignee.assigneeId, series);
                                         return hasOverload && (

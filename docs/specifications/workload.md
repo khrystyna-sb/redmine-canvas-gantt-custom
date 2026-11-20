@@ -12,6 +12,10 @@ Show planned effort for Gantt issues and actual recorded work by person and date
 
 Default pane settings are an eight-hour daily workload threshold, leaf-only enabled, closed issues excluded, and today-onward disabled. Settings persist in local user preferences. Leaf detection uses physical children rather than displayed children, so a parent with hidden children is not a leaf.
 
+The custom build stores the Histogram/Heatmap choice and assignee capacity overrides in the general browser preferences. Both views use the same workload data and filters. An override sets the same person-specific threshold for their planned and actual overloads. Zero capacity marks any positive load as an overload.
+
+Heatmap shows planned hours by calendar date on the same timeline as the histogram. Empty working days show zero; empty non-working days in the selected project calendar show a dash. A project calendar that allows work can still contribute planned hours on that date. Values fit at finer zoom levels and remain available in the daily tooltip at coarser zoom levels.
+
 The SPA filters loaded tasks by assignee, project, version, tracker, status, and subproject display and excludes context-only `isContextOnly` issues from aggregation. Actual API results are also matched against these target task IDs. Physical hierarchy after moving a parent refreshes through the existing data-refetch path.
 
 <a id="予定の計算"></a>

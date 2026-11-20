@@ -1,6 +1,6 @@
 import type { WorkloadSeries } from '../../services/WorkloadLogicService';
 import { compareWorkloadAssignees } from '../../services/WorkloadLogicService';
-import { toCalendarDate } from '../../utils/dateOnly';
+import { toCalendarDate, parseDateOnly } from '../../utils/dateOnly';
 import { designTokens } from '../../styles/designTokens';
 import React, { useEffect, useRef, useCallback, useLayoutEffect, useMemo, useState, useId } from 'react';
 import { i18n } from '../../utils/i18n';
@@ -8,6 +8,8 @@ import { useWorkloadStore } from '../../stores/WorkloadStore';
 import { useTaskStore } from '../../stores/TaskStore';
 import { useUIStore } from '../../stores/UIStore';
 import { WorkloadRenderer } from '../../renderers/WorkloadRenderer';
+import { getHeatmapDays, heatmapColors } from '../../renderers/workloadHeatmap';
+import { isWorkingDay } from '../../utils/businessCalendar';
 import { panViewportByPixels } from '../../engines/viewportPan';
 import { resizeCanvasForDpr } from '../../utils/canvasDpr';
 import { WORKLOAD_HEADER_HEIGHT } from '../../constants';
@@ -53,13 +55,15 @@ export const WorkloadCanvasPanel: React.FC<WorkloadCanvasPanelProps> = ({
     const {
         workloadData,
         actualStatus,
+        workloadViewMode,
         setRange,
         capacityThreshold,
         focusedHistogramBar,
         setFocusedHistogramBar,
         consumeFocusedHistogramBarVerticalScrollSuppression
     } = useWorkloadStore();
-    const { viewport, zoomLevel } = useTaskStore();
+    const { viewport, zoomLevel, currentProjectId } = useTaskStore();
+    const isHeatmap = workloadViewMode === 'heatmap';
     const isSidebarResizing = useUIStore((state) => state.isSidebarResizing);
     const dragStateRef = useRef<DragState>({
         active: false,
@@ -103,6 +107,9 @@ export const WorkloadCanvasPanel: React.FC<WorkloadCanvasPanelProps> = ({
             : viewport.scrollX
     }), [histogramScrollXOverride, isHistogramScrollXOverrideActive, viewport]);
     const histogramViewportRef = useRef(histogramViewport);
+    const [plotWidth, setPlotWidth] = useState(0);
+    const heatmapDates = useMemo(() => isHeatmap ? getHeatmapDays(histogramViewport, plotWidth) : [],
+        [histogramViewport, isHeatmap, plotWidth]);
     const renderCurrentState = useCallback(() => {
         if (renderEngine.current && canvasRef.current) {
             renderEngine.current.render({
@@ -110,6 +117,8 @@ export const WorkloadCanvasPanel: React.FC<WorkloadCanvasPanelProps> = ({
                 zoomLevel,
                 workloadData,
                 capacityThreshold,
+                mode: workloadViewMode,
+                projectId: currentProjectId,
                 showActual: actualStatus === 'ready',
                 verticalScroll: scrollTop,
                 hoveredAssigneeId: null,
@@ -120,7 +129,7 @@ export const WorkloadCanvasPanel: React.FC<WorkloadCanvasPanelProps> = ({
                 getBarLabelInfo: useWorkloadStore.getState().getHistogramBarLabelInfo
             });
         }
-    }, [actualStatus, capacityThreshold, focusedHistogramBar, histogramViewport, scrollTop, workloadData, zoomLevel]);
+    }, [actualStatus, capacityThreshold, currentProjectId, focusedHistogramBar, histogramViewport, scrollTop, workloadData, workloadViewMode, zoomLevel]);
 
     useEffect(() => {
         histogramViewportRef.current = histogramViewport;
@@ -175,6 +184,7 @@ export const WorkloadCanvasPanel: React.FC<WorkloadCanvasPanelProps> = ({
         const width = viewportElement?.clientWidth ?? containerElement?.clientWidth ?? 0;
         const height = viewportElement?.clientHeight ?? Math.max(0, (containerElement?.clientHeight ?? 0) - WORKLOAD_HEADER_HEIGHT);
         if (width > 0 && height > 0) {
+            setPlotWidth(width);
             const ctx = canvasRef.current.getContext('2d');
             resizeCanvasForDpr(canvasRef.current, ctx, width, height);
         }
@@ -224,13 +234,13 @@ export const WorkloadCanvasPanel: React.FC<WorkloadCanvasPanelProps> = ({
         if (assigneeIndex < 0) return;
 
         const daily = workloadData.assignees.get(focusedHistogramBar.assigneeId)?.dailyWorkloads.get(focusedHistogramBar.dateStr);
-        if (!daily) return;
+        if (!daily && !isHeatmap) return;
 
         const nextScrollTop = assigneeIndex * rowHeight;
         if (Math.abs(viewportRef.current.scrollTop - nextScrollTop) > 1) {
             viewportRef.current.scrollTop = nextScrollTop;
         }
-    }, [consumeFocusedHistogramBarVerticalScrollSuppression, focusedHistogramBar, focusedHistogramBarKey, rowHeight, workloadData]);
+    }, [consumeFocusedHistogramBarVerticalScrollSuppression, focusedHistogramBar, focusedHistogramBarKey, isHeatmap, rowHeight, workloadData]);
 
     useEffect(() => {
         if (!focusedHistogramBar || !workloadData || !viewportRef.current) {
@@ -318,6 +328,7 @@ export const WorkloadCanvasPanel: React.FC<WorkloadCanvasPanelProps> = ({
             zoomLevel: interactionState.zoomLevel,
             workloadData: interactionState.workloadData,
             capacityThreshold: interactionState.capacityThreshold,
+            mode: useWorkloadStore.getState().workloadViewMode,
             showActual: useWorkloadStore.getState().actualStatus === 'ready',
             verticalScroll: interactionState.scrollTop
         });
@@ -484,14 +495,39 @@ export const WorkloadCanvasPanel: React.FC<WorkloadCanvasPanelProps> = ({
         };
     }, [finishDrag, hitTestDailyBarAtClientPoint, isScrollInteractionLocked, setFocusedHistogramBar, setHistogramBarHoveredState, setPointerSuppressedState, updateHoverState]);
 
+    const navigateHeatmap = (event: React.KeyboardEvent<HTMLCanvasElement>) => {
+        if (!isHeatmap || !workloadData || heatmapDates.length === 0 ||
+            !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
+        const assignees = [...workloadData.assignees.values()].sort(compareWorkloadAssignees);
+        if (assignees.length === 0) return;
+
+        event.preventDefault();
+        const row = assignees.findIndex(item => item.assigneeId === focusedHistogramBar?.assigneeId);
+        const column = heatmapDates.findIndex(day => day.key === focusedHistogramBar?.dateStr);
+        const rowStep = event.key === 'ArrowUp' ? -1 : event.key === 'ArrowDown' ? 1 : 0;
+        const columnStep = event.key === 'ArrowLeft' ? -1 : event.key === 'ArrowRight' ? 1 : 0;
+        const nextRow = Math.max(0, Math.min(assignees.length - 1, row < 0 ? Math.floor(scrollTop / rowHeight) : row + rowStep));
+        const nextColumn = Math.max(0, Math.min(heatmapDates.length - 1, column < 0 ? 0 : column + columnStep));
+        setFocusedHistogramBar({ assigneeId: assignees[nextRow].assigneeId, dateStr: heatmapDates[nextColumn].key });
+    };
+
     const dailyDescription = (assigneeId: number, dateStr: string) => {
         const assignee = workloadData?.assignees.get(assigneeId);
         const daily = assignee?.dailyWorkloads.get(dateStr);
+        if (isHeatmap) {
+            const date = parseDateOnly(dateStr);
+            const planned = daily?.plannedLoad ?? 0;
+            const nonWorking = planned === 0 && date !== null && !isWorkingDay(date, currentProjectId);
+            const capacity = assignee?.capacityHours ?? capacityThreshold;
+            return `${dateStr} ${assignee?.assigneeName ?? ''}\n${i18n.t('label_workload_planned')}: ${planned.toFixed(1)}h\n${nonWorking
+                ? i18n.t('label_workload_no_capacity') || 'Non-working day'
+                : `${i18n.t('label_workload_capacity')}: ${capacity}h`}`;
+        }
         return `${dateStr} ${assignee?.assigneeName ?? ''}\n${i18n.t('label_workload_planned')}: ${(daily?.plannedLoad ?? 0).toFixed(1)}h\n${i18n.t('label_workload_actual')}: ${actualStatus === 'ready' ? `${(daily?.actualHours ?? 0).toFixed(1)}h` : '—'}`;
     };
 
     const describedBar = hoveredBar ?? focusedHistogramBar;
-    const description = describedBar && workloadData?.assignees.get(describedBar.assigneeId)?.dailyWorkloads.has(describedBar.dateStr)
+    const description = describedBar && (isHeatmap || workloadData?.assignees.get(describedBar.assigneeId)?.dailyWorkloads.has(describedBar.dateStr))
         ? dailyDescription(describedBar.assigneeId, describedBar.dateStr)
         : '';
 
@@ -510,17 +546,32 @@ export const WorkloadCanvasPanel: React.FC<WorkloadCanvasPanelProps> = ({
                 color: '#666',
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
-                backgroundColor: '#fafafa'
+                backgroundColor: '#fafafa',
+                position: 'relative',
+                paddingBottom: isHeatmap ? 16 : 0
             }} data-testid="workload-canvas-header">
-                <span>{i18n.t('label_workload_histogram') || 'HISTOGRAM (DAILY WORKLOAD)'}</span>
-                <span style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 10 }}>
+                <span>{isHeatmap ? i18n.t('label_workload_view_heatmap') || 'Heatmap' : i18n.t('label_workload_histogram') || 'HISTOGRAM (DAILY WORKLOAD)'}</span>
+                {isHeatmap ? (
+                    <>
+                        <span style={{ display: 'flex', gap: 8, fontSize: 10 }}>
+                            <span style={{ background: heatmapColors.full, padding: '0 4px' }}>{i18n.t('label_workload_planned')} (h)</span>
+                            <span style={{ background: heatmapColors.overload, padding: '0 4px' }}>{i18n.t('label_workload_planned_overload')}</span>
+                            <span style={{ background: heatmapColors.nonWorking, padding: '0 4px' }}>{i18n.t('label_workload_no_capacity')}</span>
+                        </span>
+                        <div aria-hidden="true" data-testid="workload-heatmap-dates" style={{ position: 'absolute', height: 16, bottom: 0, left: 0, right: 0, overflow: 'hidden' }}>
+                            {heatmapDates.filter(day => day.date / 86_400_000 % Math.ceil(40 / day.width) === 0).map(day => (
+                                <span key={day.key} style={{ position: 'absolute', left: day.x, fontSize: 10, whiteSpace: 'nowrap' }}>{day.key.slice(5)}</span>
+                            ))}
+                        </div>
+                    </>
+                ) : <span style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 10 }}>
                     <span>□ {i18n.t('label_workload_planned')}</span>
                     <span>■ {i18n.t('label_workload_actual')}</span>
                     <span>┄ {i18n.t('label_workload_capacity')} {capacityThreshold}h</span>
-                </span>
+                </span>}
             </div>
-            {actualStatus === 'error' && <div role="alert" style={{ position: 'absolute', top: WORKLOAD_HEADER_HEIGHT, right: 8, zIndex: 2, background: designTokens.appBg, color: designTokens.taskDelayed, fontSize: 12 }}>{i18n.t('label_workload_actual_load_failed')}</div>}
-            {actualStatus === 'loading' && <span role="status" style={{ position: 'absolute', top: WORKLOAD_HEADER_HEIGHT, right: 8, zIndex: 2, fontSize: 12 }}>{i18n.t('label_workload_actual')} — {i18n.t('label_loading')}</span>}
+            {!isHeatmap && actualStatus === 'error' && <div role="alert" style={{ position: 'absolute', top: WORKLOAD_HEADER_HEIGHT, right: 8, zIndex: 2, background: designTokens.appBg, color: designTokens.taskDelayed, fontSize: 12 }}>{i18n.t('label_workload_actual_load_failed')}</div>}
+            {!isHeatmap && actualStatus === 'loading' && <span role="status" style={{ position: 'absolute', top: WORKLOAD_HEADER_HEIGHT, right: 8, zIndex: 2, fontSize: 12 }}>{i18n.t('label_workload_actual')} — {i18n.t('label_loading')}</span>}
             {hoveredBar && <div role="tooltip" style={{ position: 'absolute', top: WORKLOAD_HEADER_HEIGHT, left: 8, zIndex: 3, pointerEvents: 'none', whiteSpace: 'pre-line', padding: 8, borderRadius: 8, background: designTokens.appBg, border: `1px solid ${designTokens.controlBorder}`, fontSize: 12 }}>{dailyDescription(hoveredBar.assigneeId, hoveredBar.dateStr)}</div>}
             <div
                 ref={viewportRef}
@@ -538,7 +589,7 @@ export const WorkloadCanvasPanel: React.FC<WorkloadCanvasPanelProps> = ({
                 }}
             >
                 <div style={{ position: 'relative', minHeight: '100%', height: hasAssignees ? `${contentHeight}px` : '100%' }}>
-                    <canvas ref={canvasRef} tabIndex={0} aria-describedby={descriptionId} aria-label={i18n.t('label_workload_daily_details')} data-testid="workload-canvas" style={{ position: 'sticky', top: 0, display: 'block', cursor }} />
+                    <canvas ref={canvasRef} tabIndex={0} onKeyDown={navigateHeatmap} aria-describedby={descriptionId} aria-label={i18n.t('label_workload_daily_details')} data-testid="workload-canvas" style={{ position: 'sticky', top: 0, display: 'block', cursor }} />
                 </div>
                 {!hasAssignees && (
                     <div style={{

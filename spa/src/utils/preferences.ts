@@ -41,6 +41,8 @@ export interface StoredPreferences {
     autoScheduleMoveMode?: AutoScheduleMoveMode;
     datePlacementMode?: DatePlacementMode;
     capacityThreshold?: number;
+    workloadViewMode?: 'histogram' | 'heatmap';
+    workloadCapacityByAssignee?: Record<number, number>;
     leafIssuesOnly?: boolean;
     includeClosedIssues?: boolean;
     todayOnwardOnly?: boolean;
@@ -98,6 +100,8 @@ export interface StoredGeneralPreferences {
     autoScheduleMoveMode?: AutoScheduleMoveMode;
     datePlacementMode?: DatePlacementMode;
     capacityThreshold?: number;
+    workloadViewMode?: 'histogram' | 'heatmap';
+    workloadCapacityByAssignee?: Record<number, number>;
     leafIssuesOnly?: boolean;
     includeClosedIssues?: boolean;
     todayOnwardOnly?: boolean;
@@ -151,10 +155,19 @@ export type GeneralPreferencesSnapshot = Pick<
     | 'autoScheduleMoveMode'
     | 'datePlacementMode'
     | 'capacityThreshold'
+    | 'workloadViewMode'
+    | 'workloadCapacityByAssignee'
     | 'leafIssuesOnly'
     | 'includeClosedIssues'
     | 'todayOnwardOnly'
 >;
+
+const normalizeWorkloadCapacities = (value: unknown): Record<number, number> | undefined => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+    return Object.fromEntries(Object.entries(value).filter(([id, hours]) =>
+        /^[1-9]\d*$/.test(id) && Number.isSafeInteger(Number(id)) && typeof hours === 'number' && hours >= 0 && hours <= 24
+    ));
+};
 
 const sanitizePreferences = (prefs: StoredPreferences): StoredPreferences => Object.fromEntries(
     Object.entries({
@@ -192,6 +205,8 @@ const sanitizePreferences = (prefs: StoredPreferences): StoredPreferences => Obj
         autoScheduleMoveMode: prefs.autoScheduleMoveMode,
         datePlacementMode: prefs.datePlacementMode,
         capacityThreshold: prefs.capacityThreshold,
+        workloadViewMode: prefs.workloadViewMode === 'heatmap' || prefs.workloadViewMode === 'histogram' ? prefs.workloadViewMode : undefined,
+        workloadCapacityByAssignee: normalizeWorkloadCapacities(prefs.workloadCapacityByAssignee),
         leafIssuesOnly: prefs.leafIssuesOnly,
         includeClosedIssues: prefs.includeClosedIssues,
         todayOnwardOnly: prefs.todayOnwardOnly,
@@ -256,6 +271,8 @@ const sanitizeGeneralPreferences = (prefs: StoredPreferences): StoredGeneralPref
         autoScheduleMoveMode: prefs.autoScheduleMoveMode,
         datePlacementMode: prefs.datePlacementMode,
         capacityThreshold: prefs.capacityThreshold,
+        workloadViewMode: prefs.workloadViewMode === 'heatmap' || prefs.workloadViewMode === 'histogram' ? prefs.workloadViewMode : undefined,
+        workloadCapacityByAssignee: normalizeWorkloadCapacities(prefs.workloadCapacityByAssignee),
         leafIssuesOnly: prefs.leafIssuesOnly,
         includeClosedIssues: prefs.includeClosedIssues,
         todayOnwardOnly: prefs.todayOnwardOnly

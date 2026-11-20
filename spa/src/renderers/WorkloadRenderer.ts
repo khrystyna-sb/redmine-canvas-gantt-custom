@@ -5,6 +5,7 @@ import { getCanvasLogicalSize, snapTextPosition, snapLinePosition } from '../uti
 import type { AssigneeWorkload, DailyWorkload, WorkloadData, WorkloadSeries } from '../services/WorkloadLogicService';
 import { compareWorkloadAssignees } from '../services/WorkloadLogicService';
 import { calendarWeekday } from '../utils/dateOnly';
+import { getHeatmapDayAtX, renderWorkloadHeatmap } from './workloadHeatmap';
 
 export interface WorkloadRenderState {
     viewport: Viewport;
@@ -13,11 +14,13 @@ export interface WorkloadRenderState {
     capacityThreshold: number;
     verticalScroll: number;
     showActual?: boolean;
+    mode?: 'histogram' | 'heatmap';
     hoveredAssigneeId: number | null;
     hoveredDateStr: string | null;
     focusedAssigneeId: number | null;
     focusedDateStr: string | null;
     focusedSeries?: WorkloadSeries;
+    projectId?: string | number | null;
     getBarLabelInfo?: (assigneeId: number, dateStr: string, series?: WorkloadSeries) => { current: number; total: number } | null;
 }
 
@@ -28,6 +31,7 @@ export interface WorkloadHitTestState {
     capacityThreshold: number;
     verticalScroll: number;
     showActual?: boolean;
+    mode?: 'histogram' | 'heatmap';
     hoveredAssigneeId?: number | null;
     hoveredDateStr?: string | null;
     x?: number;
@@ -110,6 +114,12 @@ export class WorkloadRenderer {
         const rowHeight = viewport.rowHeight * 2;
         const { width: canvasWidth, height: canvasHeight } = getCanvasLogicalSize(this.canvas);
 
+        if (state.mode === 'heatmap') {
+            if (x < 0 || x >= canvasWidth || y < 0 || y >= canvasHeight || viewport.scale <= 0) return null;
+            const assignee = assignees[Math.floor((y + verticalScroll) / rowHeight)];
+            return assignee ? { assigneeId: assignee.assigneeId, dateStr: getHeatmapDayAtX(viewport, x) } : null;
+        }
+
         for (const [assigneeIndex, assignee] of assignees.entries()) {
             const rowY = assigneeIndex * rowHeight - verticalScroll;
             if (rowY + rowHeight < 0 || rowY > canvasHeight) continue;
@@ -119,7 +129,7 @@ export class WorkloadRenderer {
                 if (series === 'actual' && state.showActual === false) continue;
                 const rect = WorkloadRenderer.getDailyBarRect({
                     canvasWidth,
-                    capacityThreshold,
+                    capacityThreshold: assignee.capacityHours ?? capacityThreshold,
                     viewport,
                     verticalScroll,
                     assigneeIndex,
@@ -159,6 +169,11 @@ export class WorkloadRenderer {
         ctx.clearRect(0, 0, logicalWidth, logicalHeight);
         ctx.fillStyle = designTokens.appBg;
         ctx.fillRect(0, 0, logicalWidth, logicalHeight);
+
+        if (state.mode === 'heatmap') {
+            renderWorkloadHeatmap(ctx, state, logicalWidth, logicalHeight);
+            return;
+        }
 
         const scales = getGridScales(viewport, zoomLevel);
         const rowHeight = viewport.rowHeight * 2; // Histogram rows are usually taller (e.g. 72px when row is 36px)
@@ -224,8 +239,9 @@ export class WorkloadRenderer {
             }
 
             // Draw Threshold line
-            const maxGraphLoad = Math.max(capacityThreshold * 1.5, Math.ceil(Math.max(assignee.plannedPeak, state.showActual === false ? 0 : assignee.actualPeak)), WorkloadRenderer.MAX_EXPECTED_LOAD);
-            const thresholdY = snapLinePosition(rowY + rowHeight - (capacityThreshold / maxGraphLoad) * rowHeight * 0.9);
+            const capacity = assignee.capacityHours ?? capacityThreshold;
+            const maxGraphLoad = Math.max(capacity * 1.5, Math.ceil(Math.max(assignee.plannedPeak, state.showActual === false ? 0 : assignee.actualPeak)), WorkloadRenderer.MAX_EXPECTED_LOAD);
+            const thresholdY = snapLinePosition(rowY + rowHeight - (capacity / maxGraphLoad) * rowHeight * 0.9);
             
             ctx.strokeStyle = designTokens.threshold;
             ctx.setLineDash([4, 4]);
@@ -242,7 +258,7 @@ export class WorkloadRenderer {
                 if (series === 'actual' && state.showActual === false) continue;
                 const rect = WorkloadRenderer.getDailyBarRect({
                     canvasWidth: logicalWidth,
-                    capacityThreshold,
+                    capacityThreshold: capacity,
                     viewport,
                     verticalScroll,
                     assigneeIndex: index,

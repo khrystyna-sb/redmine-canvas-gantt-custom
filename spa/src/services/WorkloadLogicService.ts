@@ -22,6 +22,7 @@ export interface WorkloadRange { from: number; to: number }
 
 export interface WorkloadOptions {
     capacityThreshold: number; // e.g. 8.0
+    capacityByAssignee?: Readonly<Record<number, number>>;
     leafIssuesOnly: boolean;
     includeClosedIssues: boolean;
     todayOnwardOnly: boolean;
@@ -45,6 +46,7 @@ export interface AssigneeWorkload {
     assigneeId: number;
     assigneeName: string;
     dailyWorkloads: Map<string, DailyWorkload>; // Keyed by YYYY-MM-DD
+    capacityHours?: number;
     plannedTotal: number;
     plannedPeak: number;
     actualTotal: number;
@@ -197,12 +199,14 @@ export class WorkloadLogicService {
         let actualOverloadedDayCount = 0;
         // Second pass: determine overloads and summarize
         assignees.forEach(workload => {
+            const capacity = options.capacityByAssignee?.[workload.assigneeId] ?? options.capacityThreshold;
+            workload.capacityHours = capacity;
             let assigneeHasOverload = false;
             let actualHasOverload = false;
             workload.dailyWorkloads.forEach(daily => {
-                daily.isActualOverload = daily.actualHours > options.capacityThreshold;
+                daily.isActualOverload = daily.actualHours > capacity;
                 if (daily.isActualOverload) { actualOverloadedDayCount++; actualHasOverload = true; }
-                if (daily.plannedLoad > options.capacityThreshold) {
+                if (daily.plannedLoad > capacity) {
                     daily.isPlannedOverload = true;
                     plannedOverloadedDayCount++;
                     assigneeHasOverload = true;

@@ -97,16 +97,19 @@ const barContainsTask = (workloadData: WorkloadData, bar: FocusedHistogramBar, t
 const findFocusedHistogramBarForTask = (
     workloadData: WorkloadData | null,
     taskId: string | null,
-    currentFocusedHistogramBar: FocusedHistogramBar
+    currentFocusedHistogramBar: FocusedHistogramBar,
+    includeActual: boolean
 ): FocusedHistogramBar => {
     if (!workloadData || !taskId) return null;
 
-    if (barContainsTask(workloadData, currentFocusedHistogramBar, taskId)) {
+    if ((includeActual || currentFocusedHistogramBar?.series !== 'actual') &&
+        barContainsTask(workloadData, currentFocusedHistogramBar, taskId)) {
         return currentFocusedHistogramBar;
     }
 
     const assignees = [...workloadData.assignees.values()].sort(compareWorkloadAssignees);
     for (const series of ['planned', 'actual'] as const) {
+        if (series === 'actual' && !includeActual) break;
         for (const assignee of assignees) {
             const sortedDailyWorkloads = Array.from(assignee.dailyWorkloads.values())
                 .sort((a, b) => a.timestamp - b.timestamp);
@@ -177,6 +180,10 @@ interface WorkloadState {
     // Settings
     workloadPaneVisible: boolean;
     capacityThreshold: number;
+    workloadViewMode: 'histogram' | 'heatmap';
+    workloadCapacityByAssignee: Record<number, number>;
+    setWorkloadViewMode: (mode: WorkloadState['workloadViewMode']) => void;
+    setAssigneeCapacity: (assigneeId: number, hours: number | null) => void;
     leafIssuesOnly: boolean;
     includeClosedIssues: boolean;
     todayOnwardOnly: boolean;
@@ -255,6 +262,8 @@ export const useWorkloadStore = create<WorkloadState>((set, get) => ({
     // Initialize from preferences or defaults
     workloadPaneVisible: false,
     capacityThreshold: prefs.capacityThreshold ?? 8.0,
+    workloadViewMode: prefs.workloadViewMode ?? 'histogram',
+    workloadCapacityByAssignee: prefs.workloadCapacityByAssignee ?? {},
     leafIssuesOnly: prefs.leafIssuesOnly ?? true,
     includeClosedIssues: prefs.includeClosedIssues ?? false,
     todayOnwardOnly: prefs.todayOnwardOnly ?? false,
@@ -317,7 +326,25 @@ export const useWorkloadStore = create<WorkloadState>((set, get) => ({
         get().setWorkloadPaneVisible(!get().workloadPaneVisible);
     },
 
+    setWorkloadViewMode: (workloadViewMode) => {
+        const focused = get().focusedHistogramBar;
+        set({ workloadViewMode, focusedHistogramBar: workloadViewMode === 'heatmap' && focused?.series === 'actual' ? null : focused });
+        savePreferences({ workloadViewMode });
+    },
+
+    setAssigneeCapacity: (assigneeId, hours) => {
+        if (!Number.isSafeInteger(assigneeId) || assigneeId <= 0 ||
+            (hours !== null && (!Number.isFinite(hours) || hours < 0 || hours > 24))) return;
+        const workloadCapacityByAssignee = { ...get().workloadCapacityByAssignee };
+        if (hours === null) delete workloadCapacityByAssignee[assigneeId];
+        else workloadCapacityByAssignee[assigneeId] = hours;
+        set({ workloadCapacityByAssignee });
+        savePreferences({ workloadCapacityByAssignee });
+        if (get().workloadPaneVisible) get().calculateWorkloadData();
+    },
+
     setCapacityThreshold: (threshold) => {
+        if (!Number.isFinite(threshold) || threshold <= 0 || threshold > 24) return;
         set({ capacityThreshold: threshold });
         savePreferences({ capacityThreshold: threshold });
         if (get().workloadPaneVisible) {
@@ -467,7 +494,7 @@ export const useWorkloadStore = create<WorkloadState>((set, get) => ({
 
     calculateWorkloadData: () => {
         cancelCalculation();
-        const { capacityThreshold, leafIssuesOnly, includeClosedIssues, todayOnwardOnly } = get();
+        const { capacityThreshold, workloadCapacityByAssignee, leafIssuesOnly, includeClosedIssues, todayOnwardOnly } = get();
         
         const taskStore = useTaskStore.getState();
         const { allTasks, taskStatuses, selectedTaskId } = taskStore;
@@ -478,6 +505,7 @@ export const useWorkloadStore = create<WorkloadState>((set, get) => ({
 
         const options: WorkloadOptions = {
             capacityThreshold,
+            capacityByAssignee: workloadCapacityByAssignee,
             leafIssuesOnly,
             includeClosedIssues,
             todayOnwardOnly
@@ -492,7 +520,8 @@ export const useWorkloadStore = create<WorkloadState>((set, get) => ({
         const focusedHistogramBar = findFocusedHistogramBarForTask(
             data,
             selectedTaskId,
-            get().focusedHistogramBar
+            get().focusedHistogramBar,
+            get().workloadViewMode === 'histogram'
         );
         set({
             workloadData: data,
@@ -511,7 +540,8 @@ useTaskStore.subscribe((state, prevState) => {
         const nextFocusedHistogramBar = findFocusedHistogramBarForTask(
             workloadState.workloadData,
             state.selectedTaskId,
-            workloadState.focusedHistogramBar
+            workloadState.focusedHistogramBar,
+            workloadState.workloadViewMode === 'histogram'
         );
 
         if (

@@ -8,6 +8,12 @@ The workload pane compares estimated effort with recorded work over the visible 
 2. Check **Show Workload Pane** in its menu.
 3. If needed, adjust **Capacity Threshold** and toggle **Leaf Issues Only**, **Include Closed Issues**, or **Today Onward Only**. These focus filters apply to both Planned and Actual.
 
+## Heatmap in the custom build
+
+Choose **Histogram** or **Heatmap** in **Workload view**. Heatmap shows planned hours by assignee and calendar date. Deeper blue means a greater share of capacity, and red indicates overload. Empty working days show zero. Empty non-working days show a dash. Hover over any cell to read its exact hours at any zoom level.
+
+Use **Capacity by assignee (hours/day)** to give someone a different threshold. Clear the value to use the default threshold. The browser remembers the view and overrides.
+
 ## Read the chart
 
 - **Planned** is the estimate for issues assigned to a person, divided across each issue's working days.

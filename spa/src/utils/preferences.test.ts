@@ -68,6 +68,12 @@ describe('Preferences storage', () => {
         expect(loadDisplayPreferencesWithSource(2).preferences.taskColorMode).toBeUndefined();
     });
 
+    it('remembers the workload view and valid capacity overrides', () => {
+        savePreferences({ workloadViewMode: 'heatmap', workloadCapacityByAssignee: { 12: 4.5, 13: 0, 14: 25 } }, 1);
+        expect(loadPreferences(1).workloadViewMode).toBe('heatmap');
+        expect(loadPreferences(1).workloadCapacityByAssignee).toEqual({ 12: 4.5, 13: 0 });
+    });
+
     it('saves and loads autoSave', () => {
         savePreferences({ autoSave: true }, 1);
         expect(loadPreferences(1).autoSave).toBe(true);

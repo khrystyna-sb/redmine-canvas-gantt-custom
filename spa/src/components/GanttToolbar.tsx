@@ -15,6 +15,7 @@ import { navigateToRedminePath } from '../utils/navigation';
 import { toResolvedQueryStateFromStore } from '../utils/queryParams';
 import { serializeRedmineIssueQueryParams } from '../query/redmineQueryUrlCodec';
 import { useToolbarMenuState } from './gantt/useToolbarMenuState';
+import { WorkloadCapacityControl } from './workload/WorkloadCapacityControl';
 import { useWorkloadStore } from '../stores/WorkloadStore';
 import type { GanttExportHandle } from '../export/types';
 import { DisplaySettingsControls } from './DisplaySettingsControls';
@@ -120,6 +121,8 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({ zoomLevel, onZoomCha
     const {
         workloadPaneVisible,
         toggleWorkloadPaneVisible,
+        workloadViewMode,
+        setWorkloadViewMode,
         capacityThreshold,
         setCapacityThreshold,
         leafIssuesOnly,
@@ -1267,6 +1270,14 @@ const showDisplaySettingsMenu = isMenuOpen('displaySettings');
                             </label>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', opacity: workloadPaneVisible ? 1 : 0.5, pointerEvents: workloadPaneVisible ? 'auto' : 'none' }}>
+                                <label>
+                                    {i18n.t('label_workload_view') || 'Workload view'}{' '}
+                                    <select disabled={!workloadPaneVisible} value={workloadViewMode}
+                                        onChange={event => setWorkloadViewMode(event.target.value === 'heatmap' ? 'heatmap' : 'histogram')}>
+                                        <option value="histogram">{i18n.t('label_workload_view_histogram') || 'Histogram'}</option>
+                                        <option value="heatmap">{i18n.t('label_workload_view_heatmap') || 'Heatmap'}</option>
+                                    </select>
+                                </label>
                                 <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', color: designTokens.textSecondary }}>
                                     <span>{i18n.t('label_capacity_threshold') || 'Capacity Threshold (hours/day)'}</span>
                                     <input
@@ -1279,6 +1290,7 @@ const showDisplaySettingsMenu = isMenuOpen('displaySettings');
                                         style={{ padding: '4px 8px', width: '80px', border: `1px solid ${designTokens.controlBorderStrong}`, borderRadius: '4px' }}
                                     />
                                 </label>
+                                <WorkloadCapacityControl assignees={assignees} disabled={!workloadPaneVisible} />
 
                                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0', color: designTokens.textSecondary, cursor: 'pointer' }}>
                                     <input

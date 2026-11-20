@@ -156,6 +156,12 @@ class CanvasGanttsController < ApplicationController
     label_workload_actual_load_failed: :label_workload_actual_load_failed,
     label_workload_capacity: :label_workload_capacity,
     label_workload_histogram: :label_workload_histogram,
+    label_workload_view: :label_workload_view,
+    label_workload_view_histogram: :label_workload_view_histogram,
+    label_workload_view_heatmap: :label_workload_view_heatmap,
+    label_workload_person_capacity: :label_workload_person_capacity,
+    label_workload_select_assignee: :label_workload_select_assignee,
+    label_workload_no_capacity: :label_workload_no_capacity,
     label_workload_focus_overload: :label_workload_focus_overload,
     label_workload_daily_details: :label_workload_daily_details,
 

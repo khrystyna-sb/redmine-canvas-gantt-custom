@@ -51,6 +51,17 @@ describe('planned and actual comparison', () => {
     const planned = buildTask({ id: '1', assignedToId: 10, assignedToName: 'Dave', estimatedHours: 40, startDate: monday, dueDate: monday + 4 * 86400000 });
     const entry = (hours: number, overrides = {}) => ({ id: 'e1', issueId: '1', userId: 20, userName: 'John', spentOn: '2026-09-07', hours, ...overrides });
 
+    it('compares identical allocations against the assignees’ individual capacities', () => {
+        const tasks = [planned, { ...planned, id: '2', assignedToId: 20 }];
+        const result = WorkloadLogicService.calculateWorkload(tasks, new Set(), {
+            ...options, capacityByAssignee: { 10: 4, 20: 0 }
+        }, [entry(3)]);
+        expect(result.assignees.get(10)).toMatchObject({ capacityHours: 4, plannedTotal: 40 });
+        expect(result.assignees.get(20)).toMatchObject({ capacityHours: 0, plannedTotal: 40 });
+        expect(result.plannedOverloadedDayCount).toBe(10);
+        expect(result.actualOverloadedDayCount).toBe(1);
+    });
+
     it('excludes a physical parent from both series even when its child is absent', () => {
         const parent = { ...planned, hasPhysicalChildren: true, hasChildren: false };
         expect(WorkloadLogicService.calculateWorkload([parent], new Set(), options, [entry(3)]).assignees.size).toBe(0);
