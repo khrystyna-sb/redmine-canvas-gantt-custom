@@ -58,6 +58,21 @@ const buildContext = () => ({
 }) as unknown as CanvasRenderingContext2D;
 
 describe('TaskRenderer', () => {
+    it('colors completed bars and one-date markers by custom status ID', () => {
+        const ctx = buildContext();
+        const colors: string[] = [];
+        vi.mocked(ctx.fill).mockImplementation(() => { colors.push(String(ctx.fillStyle)); });
+        const canvas = { width: 800, height: 600, getContext: () => ctx } as unknown as HTMLCanvasElement;
+        const tasks = [
+            { ...buildTask(), ratioDone: 100, statusId: 101 },
+            { ...buildTask(), id: '2', rowIndex: 1, dueDate: NaN, ratioDone: 100, statusId: 102 }
+        ];
+        new TaskRenderer(canvas).render(viewport, tasks, 2, 2, [], [], false, false, true, null,
+            false, true, true, TEST_START_DATE, { 101: '#123456', 102: '#abcdef' });
+
+        expect(colors).toEqual(['#123456', '#abcdef']);
+    });
+
     it('aligns project and version summaries to calendar cell boundaries', () => {
         const ctx = buildContext();
         const canvas = {
@@ -102,7 +117,7 @@ describe('TaskRenderer', () => {
 
         renderer.render(viewport, [{ ...buildTask(), startDate: localDate, dueDate: undefined }], 1, 2, []);
 
-        expect(drawPoint).toHaveBeenCalledWith(ctx, expect.any(Object), 0.5, 0, viewport.rowHeight, 'triangle_right', expect.any(Number));
+        expect(drawPoint).toHaveBeenCalledWith(ctx, expect.any(Object), 0.5, 0, viewport.rowHeight, 'triangle_right', expect.any(Number), undefined);
     });
 
     it('uses the supplied local CalendarDate for a multi-day delay hatch boundary', () => {

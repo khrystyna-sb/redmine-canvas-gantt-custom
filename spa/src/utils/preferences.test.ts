@@ -59,6 +59,15 @@ describe('Preferences storage', () => {
         expect(loadDisplayPreferencesWithSource(1).preferences.showTaskBarDates).toBe(true);
     });
 
+    it('round-trips status color settings without leaking project-specific colors', () => {
+        saveDisplayPreferences({ taskColorMode: 'status', statusColors: { 22: '#ABCDEF', 23: 'invalid' } }, 1);
+        expect(loadDisplayPreferencesWithSource(1).preferences).toMatchObject({
+            taskColorMode: 'status', statusColors: { 22: '#abcdef' }
+        });
+        expect(loadDisplayPreferencesWithSource(1).preferences.statusColors).toEqual({ 22: '#abcdef' });
+        expect(loadDisplayPreferencesWithSource(2).preferences.taskColorMode).toBeUndefined();
+    });
+
     it('saves and loads autoSave', () => {
         savePreferences({ autoSave: true }, 1);
         expect(loadPreferences(1).autoSave).toBe(true);

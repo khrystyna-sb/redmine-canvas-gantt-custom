@@ -81,6 +81,7 @@ export const GanttContainer = React.forwardRef<GanttExportHandle>((_, ref) => {
     const showProgressLine = useUIStore(state => state.showProgressLine);
     const showTaskTitles = useUIStore(state => state.showTaskTitles);
     const showTaskBarDates = useUIStore(state => state.showTaskBarDates);
+    const statusColors = useUIStore(state => state.taskColorMode === 'status' ? state.statusColors : undefined);
     const showPointsOrphans = useUIStore(state => state.showPointsOrphans);
     const showStartDateOnly = useUIStore(state => state.showStartDateOnly);
     const showDueDateOnly = useUIStore(state => state.showDueDateOnly);
@@ -299,7 +300,7 @@ export const GanttContainer = React.forwardRef<GanttExportHandle>((_, ref) => {
             });
         }
         if (engines.current.task) {
-            engines.current.task.render(viewport, tasks, rowCount, zoomLevel, relations, layoutRows, showTaskTitles, showTaskBarDates, showPointsOrphans, baselineSnapshot, showBaseline, showStartDateOnly, showDueDateOnly, today);
+            engines.current.task.render(viewport, tasks, rowCount, zoomLevel, relations, layoutRows, showTaskTitles, showTaskBarDates, showPointsOrphans, baselineSnapshot, showBaseline, showStartDateOnly, showDueDateOnly, today, statusColors);
         }
         if (engines.current.overlay) {
             engines.current.overlay.render({ ...overlayRenderState, today });
@@ -310,6 +311,7 @@ export const GanttContainer = React.forwardRef<GanttExportHandle>((_, ref) => {
         selectedTaskIds,
         showTaskTitles,
         showTaskBarDates,
+        statusColors,
         showPointsOrphans,
         showStartDateOnly,
         showDueDateOnly,
@@ -375,6 +377,7 @@ export const GanttContainer = React.forwardRef<GanttExportHandle>((_, ref) => {
                 showBaseline,
                 showTaskTitles,
                 showTaskBarDates,
+                statusColors,
                 showPointsOrphans,
                 showStartDateOnly,
                 showDueDateOnly,
@@ -385,7 +388,7 @@ export const GanttContainer = React.forwardRef<GanttExportHandle>((_, ref) => {
         exportCsv: async () => {
             exportTasksAsCsv(tasks, relations, customFields);
         }
-    }), [baselineSnapshot, captureSnapshot, customFields, effectiveRelations, layoutRows, pendingRelationIds, relations, rightPaneVisible, rowCount, showBaseline, showDueDateOnly, showPointsOrphans, showProgressLine, showStartDateOnly, showTaskBarDates, showTaskTitles, tasks, viewport, zoomLevel]);
+    }), [baselineSnapshot, captureSnapshot, customFields, effectiveRelations, layoutRows, pendingRelationIds, relations, rightPaneVisible, rowCount, showBaseline, showDueDateOnly, showPointsOrphans, showProgressLine, showStartDateOnly, showTaskBarDates, showTaskTitles, statusColors, tasks, viewport, zoomLevel]);
 
     const workloadSplitRows = `minmax(${WORKLOAD_MIN_PANE_PX}px, ${workloadTopWeight}fr) ${WORKLOAD_SPLIT_HANDLE_HEIGHT}px minmax(${WORKLOAD_MIN_PANE_PX}px, ${workloadBottomWeight}fr)`;
     const collapsedSplitRows = 'minmax(0, 1fr) 0px 0px';

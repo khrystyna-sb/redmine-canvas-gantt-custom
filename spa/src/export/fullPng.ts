@@ -334,7 +334,8 @@ export const exportFullRangePng = async (snapshot: FullGanttExportSnapshot) => {
                 snapshot.showBaseline,
                 snapshot.showStartDateOnly,
                 snapshot.showDueDateOnly,
-                snapshot.today
+                snapshot.today,
+                snapshot.statusColors
             );
         });
         renderAndComposite(() => {

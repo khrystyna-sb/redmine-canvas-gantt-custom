@@ -16,6 +16,8 @@ import {
     TASK_TITLE_OFFSET_WITH_DATES
 } from './taskLabels';
 
+import { getStatusColor, type StatusColors } from '../utils/statusColors';
+
 export class TaskRenderer {
     private canvas: HTMLCanvasElement;
 
@@ -47,7 +49,8 @@ export class TaskRenderer {
         showBaseline: boolean = false,
         showStartDateOnly: boolean = showPointsOrphans,
         showDueDateOnly: boolean = showPointsOrphans,
-        today: CalendarDate = todayCalendarDate()
+        today: CalendarDate = todayCalendarDate(),
+        statusColors?: StatusColors
     ) {
         const ctx = this.canvas.getContext('2d');
         if (!ctx) return;
@@ -99,12 +102,13 @@ export class TaskRenderer {
 
             // Calculate basic Y position
             const rowY = task.rowIndex * viewport.rowHeight - viewport.scrollY;
+            const statusColor = statusColors && task.statusId > 0 ? getStatusColor(task.statusId, statusColors) : undefined;
 
             // Check if we have BOTH valid dates to draw a bar
             if (Number.isFinite(task.startDate) && Number.isFinite(task.dueDate)) {
                 const bounds = LayoutEngine.getTaskBounds(task, viewport, 'bar', zoomLevel);
                 // Requirement 6.1: Parent tasks drawn as Redmine standard summary bar
-                const barBounds = this.drawRedmineTaskBar(ctx, task, bounds.x, bounds.y, bounds.width, bounds.height, xTodayLine);
+                const barBounds = this.drawRedmineTaskBar(ctx, task, bounds.x, bounds.y, bounds.width, bounds.height, xTodayLine, statusColor);
 
                 if (showDependencyIndicators && dependencySummary) {
                     const summary = dependencySummary.get(task.id);
@@ -139,7 +143,7 @@ export class TaskRenderer {
                 // Position orphan points at the center of the day cell.
                 const startDate = LayoutEngine.snapDate(task.startDate, zoomLevel);
                 const startX = LayoutEngine.calendarDateToX(startDate, viewport, 'center') - viewport.scrollX;
-                this.drawTaskAsPoint(ctx, task, startX, rowY, viewport.rowHeight, 'triangle_right', today);
+                this.drawTaskAsPoint(ctx, task, startX, rowY, viewport.rowHeight, 'triangle_right', today, statusColor);
 
                 if (showTaskBarDates) {
                     this.drawTaskBarDates(ctx, task, {
@@ -169,7 +173,7 @@ export class TaskRenderer {
                 // Position orphan points at the center of the day cell.
                 const dueDate = LayoutEngine.snapDate(task.dueDate, zoomLevel);
                 const dueX = LayoutEngine.calendarDateToX(dueDate, viewport, 'center') - viewport.scrollX;
-                this.drawTaskAsPoint(ctx, task, dueX, rowY, viewport.rowHeight, 'diamond', today);
+                this.drawTaskAsPoint(ctx, task, dueX, rowY, viewport.rowHeight, 'diamond', today, statusColor);
 
                 if (showTaskBarDates) {
                     this.drawTaskBarDates(ctx, task, {
@@ -325,7 +329,8 @@ export class TaskRenderer {
         y: number,
         width: number,
         height: number,
-        xToday: number
+        xToday: number,
+        statusColor?: string
     ) {
         // === 1. Calculation & Pixel Snapping ===
         const isParent = task.hasChildren;
@@ -358,7 +363,7 @@ export class TaskRenderer {
         const radius = Math.min(6, currentBarHeight / 2);
         
         // 1. Base Bar (Planned Duration) - Standard Color
-        ctx.fillStyle = TaskRenderer.PLAN_GRAY;
+        ctx.fillStyle = statusColor ?? TaskRenderer.PLAN_GRAY;
         ctx.beginPath();
         if (typeof ctx.roundRect === 'function') {
             ctx.roundRect(baseX, barY, baseWidth, currentBarHeight, radius);
@@ -368,7 +373,11 @@ export class TaskRenderer {
         ctx.fill();
 
         // 2. Progress Bar - Green theme
-        if (progressWidth > 0) {
+        if (progressWidth > 0 && statusColor) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
+            const progressHeight = Math.min(2, currentBarHeight);
+            ctx.fillRect(baseX, barY + (currentBarHeight - progressHeight) / 2, progressWidth, progressHeight);
+        } else if (progressWidth > 0) {
             ctx.fillStyle = TaskRenderer.DONE_GREEN;
             ctx.beginPath();
             if (typeof ctx.roundRect === 'function') {
@@ -394,7 +403,7 @@ export class TaskRenderer {
             const capWidth = Math.max(2, Math.round(height * 0.3));
             const capRadius = Math.min(2, capWidth / 2);
 
-            ctx.fillStyle = designTokens.parentCap;
+            ctx.fillStyle = statusColor ?? designTokens.parentCap;
 
             ctx.beginPath();
             // Left Cap
@@ -508,7 +517,8 @@ export class TaskRenderer {
         y: number,
         rowHeight: number,
         shape: 'diamond' | 'triangle_left' | 'triangle_right' = 'diamond',
-        today: CalendarDate
+        today: CalendarDate,
+        statusColor?: string
     ) {
         if (!Number.isFinite(x)) return;
 
@@ -531,7 +541,7 @@ export class TaskRenderer {
             isDelayed = true;
         }
 
-        ctx.fillStyle = color;
+        ctx.fillStyle = statusColor ?? color;
         ctx.strokeStyle = designTokens.textMuted;
         ctx.lineWidth = 1;
 
@@ -544,7 +554,7 @@ export class TaskRenderer {
             } else {
                 this.defineDiamondPath(path, x, centerY, diamondSize);
             }
-            this.drawHatchedPath(ctx, path, x, centerY, diamondSize);
+            this.drawHatchedPath(ctx, path, x, centerY, diamondSize, statusColor);
         } else {
             const showBorder = false;
             if (shape === 'triangle_left') {
@@ -601,9 +611,10 @@ export class TaskRenderer {
         path.closePath();
     }
 
-    private drawHatchedPath(ctx: CanvasRenderingContext2D, path: Path2D, x: number, y: number, size: number) {
+    private drawHatchedPath(ctx: CanvasRenderingContext2D, path: Path2D, x: number, y: number, size: number, statusColor?: string) {
         ctx.save();
         ctx.clip(path);
+        if (statusColor) ctx.fill(path);
 
         ctx.strokeStyle = '#e03e3e'; // Darker red for stripes
         ctx.lineWidth = 1;

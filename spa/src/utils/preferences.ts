@@ -1,5 +1,6 @@
 import type { ViewMode, Viewport, ZoomLevel } from '../types';
 import type { AutoScheduleMoveMode, DatePlacementMode } from '../types/constraints';
+import { normalizeStatusColors, type TaskColorMode, type StatusColors } from './statusColors';
 import type { ColumnConfig } from '../components/sidebar/sidebarColumnSettings';
 
 type StoredViewport = Pick<Viewport, 'startDate' | 'scrollX' | 'scrollY' | 'scale'>;
@@ -15,6 +16,8 @@ export interface StoredPreferences {
     showProgressLine?: boolean;
     showTaskTitles?: boolean;
     showTaskBarDates?: boolean;
+    taskColorMode?: TaskColorMode;
+    statusColors?: StatusColors;
     showHierarchyLines?: boolean;
     showPointsOrphans?: boolean;
     showStartDateOnly?: boolean;
@@ -66,6 +69,8 @@ export interface StoredDisplayPreferences {
     showProgressLine?: boolean;
     showTaskTitles?: boolean;
     showTaskBarDates?: boolean;
+    taskColorMode?: TaskColorMode;
+    statusColors?: StatusColors;
     showHierarchyLines?: boolean;
     showPointsOrphans?: boolean;
     showStartDateOnly?: boolean;
@@ -116,6 +121,8 @@ export type DisplayPreferencesSnapshot = Pick<
     | 'showProgressLine'
     | 'showTaskTitles'
     | 'showTaskBarDates'
+    | 'taskColorMode'
+    | 'statusColors'
     | 'showHierarchyLines'
     | 'showPointsOrphans'
     | 'showStartDateOnly'
@@ -161,6 +168,8 @@ const sanitizePreferences = (prefs: StoredPreferences): StoredPreferences => Obj
         showProgressLine: prefs.showProgressLine,
         showTaskTitles: prefs.showTaskTitles,
         showTaskBarDates: prefs.showTaskBarDates,
+        taskColorMode: prefs.taskColorMode === 'status' || prefs.taskColorMode === 'default' ? prefs.taskColorMode : undefined,
+        statusColors: prefs.statusColors === undefined ? undefined : normalizeStatusColors(prefs.statusColors),
         showHierarchyLines: prefs.showHierarchyLines,
         showPointsOrphans: prefs.showPointsOrphans,
         showStartDateOnly: prefs.showStartDateOnly,
@@ -214,6 +223,8 @@ const sanitizeDisplayPreferences = (prefs: StoredPreferences): StoredDisplayPref
         showProgressLine: prefs.showProgressLine,
         showTaskTitles: prefs.showTaskTitles,
         showTaskBarDates: prefs.showTaskBarDates,
+        taskColorMode: prefs.taskColorMode === 'status' || prefs.taskColorMode === 'default' ? prefs.taskColorMode : undefined,
+        statusColors: prefs.statusColors === undefined ? undefined : normalizeStatusColors(prefs.statusColors),
         showHierarchyLines: prefs.showHierarchyLines,
         showPointsOrphans: prefs.showPointsOrphans,
         showStartDateOnly: prefs.showStartDateOnly,

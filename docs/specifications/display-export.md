@@ -12,6 +12,8 @@ The list/chart layout supports standard display, maximized list, and maximized c
 
 Without stored values, progress lines, bar dates, and baselines are off; task names, hierarchy lines, and markers for tasks with only one date are on. Start-only and due-only markers can be toggled independently. Critical-path calculation is enabled by default; disabling it stops its calculations/notifications, independently of automatic dependency scheduling. Versions, dependency ordering, columns, tracker icons, and other display options are also configurable.
 
+The custom build adds **Color by** with **Default** and **Status** modes. Status mode uses the Redmine issue status ID for colors on task bars and one-date markers. Project and version summaries retain their existing styles. Progress marks and delay hatching remain visible. Both PNG exports use the current task colors. Mode and overrides use the same per-project or shared display preference as other display settings.
+
 Issue-dialog widths are 900 / 1200 / 1500 px, default 1200 px. Height is automatic or a fixed percentage, default automatic with an initial fixed value of 80%. Fullscreen defaults to off. Dimensions are constrained to the viewport. These preferences apply to issue viewing/editing/creation and similar dialogs, excluding time-entry and query dialogs.
 
 <a id="保存範囲と優先順位"></a>

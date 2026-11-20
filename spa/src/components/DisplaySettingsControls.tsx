@@ -9,6 +9,7 @@ import {
     saveDisplayPreferences,
     saveGlobalDisplayPreferences
 } from '../utils/preferences';
+import { TaskStatusColorControls } from './TaskStatusColorControls';
 import { fontFamilies, designTokens } from '../styles/designTokens';
 
 const DEFAULT_DISPLAY_SETTINGS = {
@@ -121,6 +122,8 @@ export const DisplaySettingsControls: React.FC<DisplaySettingsControlsProps> = (
         showProgressLine,
         showTaskTitles,
         showTaskBarDates,
+        taskColorMode,
+        statusColors,
         showHierarchyLines,
         showPointsOrphans,
         toggleHierarchyLines,
@@ -174,6 +177,7 @@ export const DisplaySettingsControls: React.FC<DisplaySettingsControlsProps> = (
         || showDueDateOnly !== DEFAULT_DISPLAY_SETTINGS.showDueDateOnly
         || showTaskTitles !== DEFAULT_DISPLAY_SETTINGS.showTaskTitles
         || showTaskBarDates !== DEFAULT_DISPLAY_SETTINGS.showTaskBarDates
+        || taskColorMode !== 'default'
         || showHierarchyLines !== DEFAULT_DISPLAY_SETTINGS.showHierarchyLines
         || calculateCriticalPathEnabled !== DEFAULT_DISPLAY_SETTINGS.calculateCriticalPathEnabled
         || datePlacementMode !== DatePlacementMode.WorkingDays
@@ -247,6 +251,8 @@ export const DisplaySettingsControls: React.FC<DisplaySettingsControlsProps> = (
             showProgressLine,
             showTaskTitles,
             showTaskBarDates,
+            taskColorMode,
+            statusColors,
             showHierarchyLines,
             showPointsOrphans,
             showStartDateOnly,
@@ -408,6 +414,7 @@ export const DisplaySettingsControls: React.FC<DisplaySettingsControlsProps> = (
                             <DisplaySettingSwitch checked={showDueDateOnly} onChange={toggleDueDateOnly} label={i18n.t('label_show_due_date_only') || 'Due-date-only tasks'} />
                             <DisplaySettingSwitch checked={showTaskTitles} onChange={toggleTaskTitles} label={i18n.t('label_toggle_task_titles') || 'Ticket titles'} />
                             <DisplaySettingSwitch checked={showTaskBarDates} onChange={toggleTaskBarDates} label={i18n.t('label_toggle_task_bar_dates') || 'Task-bar dates'} />
+                            <TaskStatusColorControls />
                             <DisplaySettingSwitch checked={showHierarchyLines} onChange={toggleHierarchyLines} label={i18n.t('label_toggle_hierarchy_lines') || 'Hierarchy lines'} />
                         </div>
 

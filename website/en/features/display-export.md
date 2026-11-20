@@ -24,6 +24,10 @@ Display settings. [View full-size image](/images/display-settings-en.png)
 
 To show or hide the **Progress Line**, select it in the toolbar. This line starts at today's position and connects one point per issue row: the point is placed on the task bar according to its progress percentage. Closed issues and future issues that have not started are placed at today's position. This is separate from the vertical today line.
 
+### Status colors in the custom build
+
+In **Settings → Display**, choose **Status** under **Color by**. The **Status colors** legend lists your Redmine statuses, including custom statuses. Select a swatch to change its color or choose **Reset status colors** to restore the palette. Both PNG options use the chart’s selected colors. **Default** restores the original chart style.
+
 ### Issue dialog size
 
 Open **Settings** in the toolbar and scroll to **Ticket dialog**. Changes take effect immediately.

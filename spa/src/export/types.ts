@@ -42,6 +42,7 @@ export interface FullGanttExportSnapshot {
     showBaseline: boolean;
     showTaskTitles: boolean;
     showTaskBarDates: boolean;
+    statusColors?: import('../utils/statusColors').StatusColors;
     showPointsOrphans: boolean;
     showStartDateOnly: boolean;
     showDueDateOnly: boolean;

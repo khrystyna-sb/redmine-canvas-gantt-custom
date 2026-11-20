@@ -12,6 +12,7 @@ import {
     type IssueDialogWidthPx,
     type StoredDisplayPreferences
 } from '../utils/preferences';
+import { isStatusColor, type TaskColorMode, type StatusColors } from '../utils/statusColors';
 import { buildRedmineUrl } from '../utils/redmineUrl';
 import {
     buildColumnSettingsFromVisibleKeys,
@@ -58,6 +59,11 @@ interface UIState {
     showProgressLine: boolean;
     showTaskTitles: boolean;
     showTaskBarDates: boolean;
+    taskColorMode: TaskColorMode;
+    statusColors: StatusColors;
+    setTaskColorMode: (mode: TaskColorMode) => void;
+    setStatusColor: (statusId: number, color: string) => void;
+    resetStatusColors: () => void;
     showHierarchyLines: boolean;
     showBaseline: boolean;
     showStartDateOnly: boolean;
@@ -201,6 +207,15 @@ export const useUIStore = create<UIState>((set, get) => ({
     showProgressLine: displayPreferences.showProgressLine ?? false,
     showTaskTitles: displayPreferences.showTaskTitles ?? true,
     showTaskBarDates: displayPreferences.showTaskBarDates ?? false,
+    taskColorMode: displayPreferences.taskColorMode ?? 'default',
+    statusColors: displayPreferences.statusColors ?? {},
+    setTaskColorMode: (taskColorMode) => set({ taskColorMode }),
+    setStatusColor: (statusId, color) => {
+        if (Number.isSafeInteger(statusId) && statusId > 0 && isStatusColor(color)) {
+            set((state) => ({ statusColors: { ...state.statusColors, [statusId]: color.toLowerCase() } }));
+        }
+    },
+    resetStatusColors: () => set({ statusColors: {} }),
     showHierarchyLines: displayPreferences.showHierarchyLines ?? true,
     showBaseline: displayPreferences.showBaseline ?? false,
     showPointsOrphans: displayPreferences.showPointsOrphans ?? true,

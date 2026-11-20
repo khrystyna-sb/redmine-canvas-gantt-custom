@@ -24,6 +24,8 @@ type DisplayPreferenceSnapshot = {
     showProgressLine: UIStoreState['showProgressLine'];
     showTaskTitles: UIStoreState['showTaskTitles'];
     showTaskBarDates: UIStoreState['showTaskBarDates'];
+    taskColorMode: UIStoreState['taskColorMode'];
+    statusColors: UIStoreState['statusColors'];
     showHierarchyLines: UIStoreState['showHierarchyLines'];
     showBaseline: UIStoreState['showBaseline'];
     calculateCriticalPathEnabled: TaskStoreState['calculateCriticalPathEnabled'];
@@ -97,6 +99,8 @@ const selectDisplayPreferenceSnapshot = (
         showProgressLine: uiState.showProgressLine,
         showTaskTitles: uiState.showTaskTitles,
         showTaskBarDates: uiState.showTaskBarDates,
+        taskColorMode: uiState.taskColorMode,
+        statusColors: uiState.statusColors,
         showHierarchyLines: uiState.showHierarchyLines,
         showBaseline: uiState.showBaseline,
         calculateCriticalPathEnabled: taskState.calculateCriticalPathEnabled,
@@ -169,6 +173,8 @@ const persistDisplayPreferences = (taskState: TaskStoreState, uiState: UIStoreSt
         showProgressLine: uiState.showProgressLine,
         showTaskTitles: uiState.showTaskTitles,
         showTaskBarDates: uiState.showTaskBarDates,
+        taskColorMode: uiState.taskColorMode,
+        statusColors: uiState.statusColors,
         showHierarchyLines: uiState.showHierarchyLines,
         showBaseline: uiState.showBaseline,
         calculateCriticalPathEnabled: taskState.calculateCriticalPathEnabled,
