@@ -56,6 +56,7 @@ export const WorkloadCanvasPanel: React.FC<WorkloadCanvasPanelProps> = ({
         workloadData,
         actualStatus,
         workloadViewMode,
+        showActualWorkload,
         setRange,
         capacityThreshold,
         focusedHistogramBar,
@@ -64,6 +65,8 @@ export const WorkloadCanvasPanel: React.FC<WorkloadCanvasPanelProps> = ({
     } = useWorkloadStore();
     const { viewport, zoomLevel, currentProjectId } = useTaskStore();
     const isHeatmap = workloadViewMode === 'heatmap';
+    const showsActualSeries = showActualWorkload && !isHeatmap;
+    const visibleHoveredBar = hoveredBar?.series === 'actual' && !showsActualSeries ? null : hoveredBar;
     const isSidebarResizing = useUIStore((state) => state.isSidebarResizing);
     const dragStateRef = useRef<DragState>({
         active: false,
@@ -119,7 +122,7 @@ export const WorkloadCanvasPanel: React.FC<WorkloadCanvasPanelProps> = ({
                 capacityThreshold,
                 mode: workloadViewMode,
                 projectId: currentProjectId,
-                showActual: actualStatus === 'ready',
+                showActual: showsActualSeries && actualStatus === 'ready',
                 verticalScroll: scrollTop,
                 hoveredAssigneeId: null,
                 hoveredDateStr: null,
@@ -129,7 +132,7 @@ export const WorkloadCanvasPanel: React.FC<WorkloadCanvasPanelProps> = ({
                 getBarLabelInfo: useWorkloadStore.getState().getHistogramBarLabelInfo
             });
         }
-    }, [actualStatus, capacityThreshold, currentProjectId, focusedHistogramBar, histogramViewport, scrollTop, workloadData, workloadViewMode, zoomLevel]);
+    }, [actualStatus, capacityThreshold, currentProjectId, focusedHistogramBar, histogramViewport, scrollTop, showsActualSeries, workloadData, workloadViewMode, zoomLevel]);
 
     useEffect(() => {
         histogramViewportRef.current = histogramViewport;
@@ -321,6 +324,7 @@ export const WorkloadCanvasPanel: React.FC<WorkloadCanvasPanelProps> = ({
         const viewportRect = viewportElement.getBoundingClientRect();
         const interactionState = interactionStateRef.current;
 
+        const { actualStatus, showActualWorkload, workloadViewMode } = useWorkloadStore.getState();
         return renderer.hitTestDailyBar({
             pointerX: clientX - viewportRect.left,
             pointerY: clientY - viewportRect.top,
@@ -328,8 +332,8 @@ export const WorkloadCanvasPanel: React.FC<WorkloadCanvasPanelProps> = ({
             zoomLevel: interactionState.zoomLevel,
             workloadData: interactionState.workloadData,
             capacityThreshold: interactionState.capacityThreshold,
-            mode: useWorkloadStore.getState().workloadViewMode,
-            showActual: useWorkloadStore.getState().actualStatus === 'ready',
+            mode: workloadViewMode,
+            showActual: showActualWorkload && actualStatus === 'ready',
             verticalScroll: interactionState.scrollTop
         });
     }, []);
@@ -523,10 +527,13 @@ export const WorkloadCanvasPanel: React.FC<WorkloadCanvasPanelProps> = ({
                 ? i18n.t('label_workload_no_capacity') || 'Non-working day'
                 : `${i18n.t('label_workload_capacity')}: ${capacity}h`}`;
         }
-        return `${dateStr} ${assignee?.assigneeName ?? ''}\n${i18n.t('label_workload_planned')}: ${(daily?.plannedLoad ?? 0).toFixed(1)}h\n${i18n.t('label_workload_actual')}: ${actualStatus === 'ready' ? `${(daily?.actualHours ?? 0).toFixed(1)}h` : '—'}`;
+        const plannedDetails = `${dateStr} ${assignee?.assigneeName ?? ''}\n${i18n.t('label_workload_planned')}: ${(daily?.plannedLoad ?? 0).toFixed(1)}h`;
+        if (!showsActualSeries) return plannedDetails;
+        const actual = actualStatus === 'ready' ? `${(daily?.actualHours ?? 0).toFixed(1)}h` : '—';
+        return `${plannedDetails}\n${i18n.t('label_workload_actual')}: ${actual}`;
     };
 
-    const describedBar = hoveredBar ?? focusedHistogramBar;
+    const describedBar = visibleHoveredBar ?? focusedHistogramBar;
     const description = describedBar && (isHeatmap || workloadData?.assignees.get(describedBar.assigneeId)?.dailyWorkloads.has(describedBar.dateStr))
         ? dailyDescription(describedBar.assigneeId, describedBar.dateStr)
         : '';
@@ -566,13 +573,13 @@ export const WorkloadCanvasPanel: React.FC<WorkloadCanvasPanelProps> = ({
                     </>
                 ) : <span style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 10 }}>
                     <span>□ {i18n.t('label_workload_planned')}</span>
-                    <span>■ {i18n.t('label_workload_actual')}</span>
+                    {showsActualSeries && <span>■ {i18n.t('label_workload_actual')}</span>}
                     <span>┄ {i18n.t('label_workload_capacity')} {capacityThreshold}h</span>
                 </span>}
             </div>
-            {!isHeatmap && actualStatus === 'error' && <div role="alert" style={{ position: 'absolute', top: WORKLOAD_HEADER_HEIGHT, right: 8, zIndex: 2, background: designTokens.appBg, color: designTokens.taskDelayed, fontSize: 12 }}>{i18n.t('label_workload_actual_load_failed')}</div>}
-            {!isHeatmap && actualStatus === 'loading' && <span role="status" style={{ position: 'absolute', top: WORKLOAD_HEADER_HEIGHT, right: 8, zIndex: 2, fontSize: 12 }}>{i18n.t('label_workload_actual')} — {i18n.t('label_loading')}</span>}
-            {hoveredBar && <div role="tooltip" style={{ position: 'absolute', top: WORKLOAD_HEADER_HEIGHT, left: 8, zIndex: 3, pointerEvents: 'none', whiteSpace: 'pre-line', padding: 8, borderRadius: 8, background: designTokens.appBg, border: `1px solid ${designTokens.controlBorder}`, fontSize: 12 }}>{dailyDescription(hoveredBar.assigneeId, hoveredBar.dateStr)}</div>}
+            {showsActualSeries && actualStatus === 'error' && <div role="alert" style={{ position: 'absolute', top: WORKLOAD_HEADER_HEIGHT, right: 8, zIndex: 2, background: designTokens.appBg, color: designTokens.taskDelayed, fontSize: 12 }}>{i18n.t('label_workload_actual_load_failed')}</div>}
+            {showsActualSeries && actualStatus === 'loading' && <span role="status" style={{ position: 'absolute', top: WORKLOAD_HEADER_HEIGHT, right: 8, zIndex: 2, fontSize: 12 }}>{i18n.t('label_workload_actual')} — {i18n.t('label_loading')}</span>}
+            {visibleHoveredBar && <div role="tooltip" style={{ position: 'absolute', top: WORKLOAD_HEADER_HEIGHT, left: 8, zIndex: 3, pointerEvents: 'none', whiteSpace: 'pre-line', padding: 8, borderRadius: 8, background: designTokens.appBg, border: `1px solid ${designTokens.controlBorder}`, fontSize: 12 }}>{dailyDescription(visibleHoveredBar.assigneeId, visibleHoveredBar.dateStr)}</div>}
             <div
                 ref={viewportRef}
                 data-testid="workload-canvas-viewport"

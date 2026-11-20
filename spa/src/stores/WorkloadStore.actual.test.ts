@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { loadPreferences } from '../utils/preferences';
 import { apiClient } from '../api/client';
 import { useTaskStore } from './TaskStore';
 import { useWorkloadStore } from './WorkloadStore';
@@ -44,6 +45,31 @@ describe('actual workload lifecycle', () => {
         expect(useWorkloadStore.getState().actualEntries).toEqual(entries);
         expect(useWorkloadStore.getState().workloadData?.assignees.get(1)?.plannedTotal).toBe(8);
     });
+    it('hides actuals, ignores an in-flight response, and preserves planned totals', async () => {
+        const pending = deferred();
+        const fetch = vi.spyOn(apiClient, 'fetchActualWorkload').mockReturnValueOnce(pending.promise).mockResolvedValue(entries);
+        const state = useWorkloadStore.getState;
+        state().setWorkloadPaneVisible(true);
+        await vi.advanceTimersByTimeAsync(150);
+        state().setShowActualWorkload(false);
+        pending.resolve(entries);
+        await vi.advanceTimersByTimeAsync(200);
+
+        expect(loadPreferences().showActualWorkload).toBe(false);
+        expect(state().actualStatus).toBe('idle');
+        expect(state().workloadData?.assignees.has(2)).toBe(false);
+        expect(state().workloadData?.assignees.get(1)?.plannedTotal).toBe(8);
+        state().refreshActual();
+        await vi.advanceTimersByTimeAsync(200);
+        expect(fetch).toHaveBeenCalledTimes(1);
+
+        state().setShowActualWorkload(true);
+        await vi.advanceTimersByTimeAsync(150);
+        expect(loadPreferences().showActualWorkload).toBe(true);
+        expect(state().workloadData?.assignees.get(2)?.actualTotal).toBe(3);
+        expect(state().workloadData?.assignees.get(1)?.plannedTotal).toBe(8);
+    });
+
     it('ignores an old response even while a new range request is still debounced', async () => {
         const old = deferred();
         vi.spyOn(apiClient, 'fetchActualWorkload').mockReturnValueOnce(old.promise).mockResolvedValue([]);

@@ -14,6 +14,10 @@ Choose **Histogram** or **Heatmap** in **Workload view**. Heatmap shows planned 
 
 Use **Capacity by assignee (hours/day)** to give someone a different threshold. Clear the value to use the default threshold. The browser remembers the view and overrides.
 
+### Show or hide actual hours
+
+Choose **Show Actual** or **Hide Actual** under **Actual hours**. Hiding removes actual bars, totals and overload indicators and leaves planned calculations in effect. The browser remembers the choice.
+
 ## Read the chart
 
 - **Planned** is the estimate for issues assigned to a person, divided across each issue's working days.

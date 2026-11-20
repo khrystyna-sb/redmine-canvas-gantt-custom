@@ -42,6 +42,7 @@ export interface StoredPreferences {
     datePlacementMode?: DatePlacementMode;
     capacityThreshold?: number;
     workloadViewMode?: 'histogram' | 'heatmap';
+    showActualWorkload?: boolean;
     workloadCapacityByAssignee?: Record<number, number>;
     leafIssuesOnly?: boolean;
     includeClosedIssues?: boolean;
@@ -101,6 +102,7 @@ export interface StoredGeneralPreferences {
     datePlacementMode?: DatePlacementMode;
     capacityThreshold?: number;
     workloadViewMode?: 'histogram' | 'heatmap';
+    showActualWorkload?: boolean;
     workloadCapacityByAssignee?: Record<number, number>;
     leafIssuesOnly?: boolean;
     includeClosedIssues?: boolean;
@@ -156,6 +158,7 @@ export type GeneralPreferencesSnapshot = Pick<
     | 'datePlacementMode'
     | 'capacityThreshold'
     | 'workloadViewMode'
+    | 'showActualWorkload'
     | 'workloadCapacityByAssignee'
     | 'leafIssuesOnly'
     | 'includeClosedIssues'
@@ -206,6 +209,7 @@ const sanitizePreferences = (prefs: StoredPreferences): StoredPreferences => Obj
         datePlacementMode: prefs.datePlacementMode,
         capacityThreshold: prefs.capacityThreshold,
         workloadViewMode: prefs.workloadViewMode === 'heatmap' || prefs.workloadViewMode === 'histogram' ? prefs.workloadViewMode : undefined,
+        showActualWorkload: typeof prefs.showActualWorkload === 'boolean' ? prefs.showActualWorkload : undefined,
         workloadCapacityByAssignee: normalizeWorkloadCapacities(prefs.workloadCapacityByAssignee),
         leafIssuesOnly: prefs.leafIssuesOnly,
         includeClosedIssues: prefs.includeClosedIssues,
@@ -272,6 +276,7 @@ const sanitizeGeneralPreferences = (prefs: StoredPreferences): StoredGeneralPref
         datePlacementMode: prefs.datePlacementMode,
         capacityThreshold: prefs.capacityThreshold,
         workloadViewMode: prefs.workloadViewMode === 'heatmap' || prefs.workloadViewMode === 'histogram' ? prefs.workloadViewMode : undefined,
+        showActualWorkload: typeof prefs.showActualWorkload === 'boolean' ? prefs.showActualWorkload : undefined,
         workloadCapacityByAssignee: normalizeWorkloadCapacities(prefs.workloadCapacityByAssignee),
         leafIssuesOnly: prefs.leafIssuesOnly,
         includeClosedIssues: prefs.includeClosedIssues,

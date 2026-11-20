@@ -123,6 +123,8 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({ zoomLevel, onZoomCha
         toggleWorkloadPaneVisible,
         workloadViewMode,
         setWorkloadViewMode,
+        showActualWorkload,
+        setShowActualWorkload,
         capacityThreshold,
         setCapacityThreshold,
         leafIssuesOnly,
@@ -1291,6 +1293,14 @@ const showDisplaySettingsMenu = isMenuOpen('displaySettings');
                                     />
                                 </label>
                                 <WorkloadCapacityControl assignees={assignees} disabled={!workloadPaneVisible} />
+                                <label>
+                                    {i18n.t('label_workload_actual_hours') || 'Actual hours'}{' '}
+                                    <select disabled={!workloadPaneVisible} value={showActualWorkload ? 'show' : 'hide'}
+                                        onChange={event => setShowActualWorkload(event.target.value === 'show')}>
+                                        <option value="show">{i18n.t('label_workload_show_actual') || 'Show Actual'}</option>
+                                        <option value="hide">{i18n.t('label_workload_hide_actual') || 'Hide Actual'}</option>
+                                    </select>
+                                </label>
 
                                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0', color: designTokens.textSecondary, cursor: 'pointer' }}>
                                     <input

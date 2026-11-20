@@ -610,6 +610,9 @@ en:
     label_timer_aria_pending: "Unrecorded work time exists for %{subject}"
 
     label_workload_planned: "Planned"
+    label_workload_actual_hours: "Actual hours"
+    label_workload_show_actual: "Show Actual"
+    label_workload_hide_actual: "Hide Actual"
     label_workload_actual: "Actual"
     label_workload_planned_short: "P"
     label_workload_actual_short: "A"

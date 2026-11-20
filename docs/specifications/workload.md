@@ -35,6 +35,8 @@ For example, ten estimated hours across five Monday–Friday working days gives 
 
 ## Actual effort retrieval and calculation
 
+The custom build remembers **Show Actual / Hide Actual** in browser preferences (default: show). Hiding clears the actual series and focus, skips new time-entry requests, and invalidates in-flight responses. Actual totals, indicators, tooltips and status notices are hidden. Planned allocations, capacity, and filters continue to apply.
+
 Opening the pane or changing scope, query, or settings calls `GET /projects/:project_id/canvas_gantt/actual_workload.json`. `from` and `to` must be real `YYYY-MM-DD` dates with an inclusive span of at most 730 days. Reversed ranges, invalid formats, or excessive spans return 422. `leaf_only=1` selects physical leaves; `include_closed=1` includes closed issues.
 
 The server restricts target issues using Gantt query resolution and `Issue.visible`, then applies `TimeEntry.visible(current_user)`. SQL aggregates time within the period by user/date/issue, with row-count and response-size budgets. Aggregated rows contain `id`, `issueId`, `userId`, `userName`, `spentOn`, and `hours`; they are not raw time-entry records.

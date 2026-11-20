@@ -610,6 +610,9 @@ ja:
     label_timer_aria_pending: "%{subject}に未登録の作業時間があります"
 
     label_workload_planned: "予定"
+    label_workload_actual_hours: "実績時間"
+    label_workload_show_actual: "実績を表示"
+    label_workload_hide_actual: "実績を非表示"
     label_workload_actual: "実績"
     label_workload_planned_short: "予"
     label_workload_actual_short: "実"

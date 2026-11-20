@@ -181,7 +181,9 @@ interface WorkloadState {
     workloadPaneVisible: boolean;
     capacityThreshold: number;
     workloadViewMode: 'histogram' | 'heatmap';
+    showActualWorkload: boolean;
     workloadCapacityByAssignee: Record<number, number>;
+    setShowActualWorkload: (show: boolean) => void;
     setWorkloadViewMode: (mode: WorkloadState['workloadViewMode']) => void;
     setAssigneeCapacity: (assigneeId: number, hours: number | null) => void;
     leafIssuesOnly: boolean;
@@ -263,6 +265,7 @@ export const useWorkloadStore = create<WorkloadState>((set, get) => ({
     workloadPaneVisible: false,
     capacityThreshold: prefs.capacityThreshold ?? 8.0,
     workloadViewMode: prefs.workloadViewMode ?? 'histogram',
+    showActualWorkload: prefs.showActualWorkload ?? true,
     workloadCapacityByAssignee: prefs.workloadCapacityByAssignee ?? {},
     leafIssuesOnly: prefs.leafIssuesOnly ?? true,
     includeClosedIssues: prefs.includeClosedIssues ?? false,
@@ -285,6 +288,11 @@ export const useWorkloadStore = create<WorkloadState>((set, get) => ({
             get().calculateWorkloadData();
             return;
         }
+        if (!get().showActualWorkload) {
+            if (options?.deferCalculation) scheduleCalculation();
+            else get().calculateWorkloadData();
+            return;
+        }
         const request = actualRequest();
         set({ actualStatus: 'loading',
             ...(request?.key !== get().actualScopeKey ? { actualEntries: [] } : {}) });
@@ -294,7 +302,7 @@ export const useWorkloadStore = create<WorkloadState>((set, get) => ({
     },
     loadActual: async () => {
         clearTimeout(actualReloadTimer);
-        if (!get().workloadPaneVisible) return;
+        if (!get().workloadPaneVisible || !get().showActualWorkload) return;
         const request = actualRequest();
         if (!request) return;
         const generation = ++actualGeneration;
@@ -324,6 +332,21 @@ export const useWorkloadStore = create<WorkloadState>((set, get) => ({
 
     toggleWorkloadPaneVisible: () => {
         get().setWorkloadPaneVisible(!get().workloadPaneVisible);
+    },
+
+    setShowActualWorkload: (showActualWorkload) => {
+        if (showActualWorkload === get().showActualWorkload) return;
+        cancelActual();
+        const focused = get().focusedHistogramBar;
+        set({
+            showActualWorkload,
+            actualEntries: [],
+            actualStatus: 'idle',
+            actualScopeKey: null,
+            focusedHistogramBar: focused?.series === 'actual' ? null : focused
+        });
+        savePreferences({ showActualWorkload });
+        if (get().workloadPaneVisible) get().refreshActual();
     },
 
     setWorkloadViewMode: (workloadViewMode) => {
@@ -516,12 +539,12 @@ export const useWorkloadStore = create<WorkloadState>((set, get) => ({
             taskStore.showSubprojects, taskStore.currentProjectId)
             .filter(task => !task.isContextOnly && (taskStore.selectedStatusIds.length === 0 || taskStore.selectedStatusIds.includes(task.statusId)));
         const data = WorkloadLogicService.calculateWorkload(scopedTasks, closedStatusIds, options,
-            get().actualEntries, get().range ?? undefined);
+            get().showActualWorkload ? get().actualEntries : [], get().range ?? undefined);
         const focusedHistogramBar = findFocusedHistogramBarForTask(
             data,
             selectedTaskId,
             get().focusedHistogramBar,
-            get().workloadViewMode === 'histogram'
+            get().showActualWorkload && get().workloadViewMode === 'histogram'
         );
         set({
             workloadData: data,
@@ -541,7 +564,7 @@ useTaskStore.subscribe((state, prevState) => {
             workloadState.workloadData,
             state.selectedTaskId,
             workloadState.focusedHistogramBar,
-            workloadState.workloadViewMode === 'histogram'
+            workloadState.showActualWorkload && workloadState.workloadViewMode === 'histogram'
         );
 
         if (

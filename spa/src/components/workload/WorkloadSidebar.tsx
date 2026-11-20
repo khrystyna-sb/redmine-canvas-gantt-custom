@@ -32,6 +32,7 @@ export const WorkloadSidebar: React.FC<WorkloadSidebarProps> = ({
         workloadData,
         actualStatus,
         workloadViewMode,
+        showActualWorkload,
         resolveNextOverloadBar,
         resetHistogramSelectionCycle,
         resolveNextHistogramTask,
@@ -134,17 +135,17 @@ export const WorkloadSidebar: React.FC<WorkloadSidebarProps> = ({
                                         style={{ gridColumn: '2 / 3', gridRow: '1 / 3', minWidth: 0, overflow: 'hidden', textAlign: 'right', fontSize: '12px', color: '#666', whiteSpace: 'nowrap' }}
                                     >
                                         <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} aria-label={`${i18n.t('label_workload_planned')} ${assignee.plannedPeak.toFixed(1)}h`}>{i18n.t('label_workload_planned_short')} {assignee.plannedPeak.toFixed(1)}h</div>
-                                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} aria-label={`${i18n.t('label_workload_actual')} ${actualStatus === 'ready' ? `${assignee.actualPeak.toFixed(1)}h` : '—'}`}>{i18n.t('label_workload_actual_short')} {actualStatus === 'ready' ? `${assignee.actualPeak.toFixed(1)}h` : '—'}</div>
+                                        {showActualWorkload && <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} aria-label={`${i18n.t('label_workload_actual')} ${actualStatus === 'ready' ? `${assignee.actualPeak.toFixed(1)}h` : '—'}`}>{i18n.t('label_workload_actual_short')} {actualStatus === 'ready' ? `${assignee.actualPeak.toFixed(1)}h` : '—'}</div>}
                                     </div>
                                     <div
                                         data-testid={`workload-sidebar-total-${assignee.assigneeId}`}
                                         style={{ gridColumn: '3 / 4', gridRow: '1 / 3', minWidth: 0, overflow: 'hidden', textAlign: 'right', fontSize: '12px', color: '#666', whiteSpace: 'nowrap' }}
                                     >
                                         <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} aria-label={`${i18n.t('label_workload_planned')} ${assignee.plannedTotal.toFixed(1)}h`}>{i18n.t('label_workload_planned_short')} {assignee.plannedTotal.toFixed(1)}h</div>
-                                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} aria-label={`${i18n.t('label_workload_actual')} ${actualStatus === 'ready' ? `${assignee.actualTotal.toFixed(1)}h` : '—'}`}>{i18n.t('label_workload_actual_short')} {actualStatus === 'ready' ? `${assignee.actualTotal.toFixed(1)}h` : '—'}</div>
+                                        {showActualWorkload && <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} aria-label={`${i18n.t('label_workload_actual')} ${actualStatus === 'ready' ? `${assignee.actualTotal.toFixed(1)}h` : '—'}`}>{i18n.t('label_workload_actual_short')} {actualStatus === 'ready' ? `${assignee.actualTotal.toFixed(1)}h` : '—'}</div>}
                                     </div>
                                     {(['planned', 'actual'] as const).map(series => {
-                                        if (series === 'actual' && workloadViewMode === 'heatmap') return null;
+                                        if (series === 'actual' && (!showActualWorkload || workloadViewMode === 'heatmap')) return null;
                                         const hasOverload = Array.from(assignee.dailyWorkloads.values()).some(d => series === 'planned' ? d.isPlannedOverload : actualStatus === 'ready' && d.isActualOverload);
                                         const overloadCycleInfo = getOverloadCycleInfo(assignee.assigneeId, series);
                                         return hasOverload && (
