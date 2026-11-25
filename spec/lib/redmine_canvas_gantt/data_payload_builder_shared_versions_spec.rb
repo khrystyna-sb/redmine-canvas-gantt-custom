@@ -60,7 +60,9 @@ RSpec.describe RedmineCanvasGantt::DataPayloadBuilder do
                                          sibling_versions.fetch('descendants').id,
                                          sibling_versions.fetch('hierarchy').id, hidden_system_version.id,
                                          *external_versions.except('system').values.map(&:id))
-    expect(candidates.find { |candidate| candidate[:id] == external_versions.fetch('system').id }[:project_id]).to eq(external.id)
+    shared_candidate = candidates.find { |candidate| candidate[:id] == external_versions.fetch('system').id }
+    expect(shared_candidate).to include(project_id: external.id, project_name: external.name)
+    expect(candidates.map { |candidate| candidate.fetch(:project_name) }).not_to include(private_external.name)
 
     union_candidates = builder.build_versions([child.id, sibling.id])
     expected_union = (child.shared_versions.visible(User.current).pluck(:id) +
