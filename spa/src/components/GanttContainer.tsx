@@ -8,6 +8,7 @@ import { TaskRenderer } from '../renderers/TaskRenderer';
 import { OverlayRenderer, type OverlayRenderState } from '../renderers/OverlayRenderer';
 import { A11yLayer } from './A11yLayer';
 import { HtmlOverlay } from './HtmlOverlay';
+import { ReleaseMilestones } from './ReleaseMilestones';
 import { UiSidebar } from './UiSidebar';
 import { TimelineHeader } from './TimelineHeader';
 import { IssueIframeDialog } from './IssueIframeDialog';
@@ -93,7 +94,19 @@ export const GanttContainer = React.forwardRef<GanttExportHandle>((_, ref) => {
     const [workloadScrollTop, setWorkloadScrollTop] = useState(0);
     const [isWorkloadResizing, setIsWorkloadResizing] = useState(false);
 
-    const tasksMaxDue = useMemo(() => getMaxFiniteDueDate(tasks), [tasks]);
+    const tasksMaxDue = useMemo(() => getMaxFiniteDueDate(tasks, layoutRows), [tasks, layoutRows]);
+    const earliestRelease = useMemo(() => layoutRows.reduce<number | null>((earliest, row) => {
+        if (row.type !== 'version' || !row.release) return earliest;
+        return earliest === null ? row.release.date : Math.min(earliest, row.release.date);
+    }, null), [layoutRows]);
+
+    useLayoutEffect(() => {
+        if (earliestRelease === null || earliestRelease >= viewport.startDate) return;
+        updateViewport({
+            startDate: earliestRelease,
+            scrollX: viewport.scrollX + (viewport.startDate - earliestRelease) * viewport.scale
+        });
+    }, [earliestRelease, updateViewport, viewport]);
     const effectiveRelations = useMemo(
         () => projectEffectiveRelations(relations, pendingRelationChanges),
         [pendingRelationChanges, relations]
@@ -498,6 +511,7 @@ export const GanttContainer = React.forwardRef<GanttExportHandle>((_, ref) => {
                                         <canvas ref={baselineCanvasRef} style={{ position: 'absolute', top: 0, left: 0, zIndex: 2 }} />
                                         <canvas ref={taskCanvasRef} style={{ position: 'absolute', top: 0, left: 0, zIndex: 3 }} />
                                         <canvas ref={overlayCanvasRef} style={{ position: 'absolute', top: 0, left: 0, zIndex: 4 }} />
+                                        <ReleaseMilestones rows={layoutRows} viewport={viewport} />
                                         <HtmlOverlay />
                                         <A11yLayer />
                                     </div>
