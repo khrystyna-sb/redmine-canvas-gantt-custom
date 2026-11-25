@@ -763,6 +763,7 @@ export const apiClient = {
                 startDate,
                 ratioDone,
                 projectId: String(v.project_id),
+                projectName: typeof v.project_name === 'string' ? v.project_name : undefined,
                 status: String(v.status ?? '')
             } as Version;
         }).filter((v): v is Version => v !== null) : [];
