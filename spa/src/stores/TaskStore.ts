@@ -3025,7 +3025,7 @@ export const useTaskStore = create<TaskState>((set, get) => {
 
         const { viewport, customScales } = state;
         const newScale = customScales[zoom] ?? ZOOM_SCALES[zoom];
-        const tasksMaxDue = getMaxFiniteDueDate(state.allTasks);
+        const tasksMaxDue = getMaxFiniteDueDate(state.allTasks, state.layoutRows);
         const adjustment = computeCenteredViewport(viewport, newScale, tasksMaxDue);
 
         return {
@@ -3038,7 +3038,7 @@ export const useTaskStore = create<TaskState>((set, get) => {
     setZoomLevel: (level) => set((state) => {
         const { viewport, customScales } = state;
         const newScale = customScales[level] ?? ZOOM_SCALES[level];
-        const tasksMaxDue = getMaxFiniteDueDate(state.allTasks);
+        const tasksMaxDue = getMaxFiniteDueDate(state.allTasks, state.layoutRows);
         const adjustment = computeCenteredViewport(viewport, newScale, tasksMaxDue);
 
         let mode: ViewMode = 'Week';

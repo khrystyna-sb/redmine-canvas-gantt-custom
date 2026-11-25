@@ -3314,8 +3314,9 @@ describe('TaskStore asynchronous state ownership', () => {
         ]);
         const before = useTaskStore.getState();
         expect(before.layoutRows.find(row => row.type === 'version')).toMatchObject({
-            startDate: kind === 'explicit' ? MONDAY : TUESDAY,
-            dueDate: kind === 'explicit' ? FRIDAY : WEDNESDAY
+            startDate: TUESDAY,
+            dueDate: WEDNESDAY,
+            release: kind === 'explicit' ? { date: FRIDAY } : undefined
         });
         useTaskStore.getState().setCalculateCriticalPathEnabled(false);
         resetDerivedRecalculationCounters();
@@ -3324,8 +3325,9 @@ describe('TaskStore asynchronous state ownership', () => {
 
         const after = useTaskStore.getState();
         expect(after.layoutRows.find(row => row.type === 'version')).toMatchObject({
-            startDate: kind === 'explicit' ? MONDAY : TUESDAY,
-            dueDate: kind === 'explicit' ? FRIDAY : THURSDAY
+            startDate: TUESDAY,
+            dueDate: THURSDAY,
+            release: kind === 'explicit' ? { date: FRIDAY } : undefined
         });
         expect(after.rowCount).toBe(before.rowCount);
         expect(derivedRecalculationCounters.criticalPath).toBe(0);
