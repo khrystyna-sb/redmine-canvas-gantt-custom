@@ -376,13 +376,18 @@ export const buildLayout = (
                 return aDate - bDate;
             });
 
-            const getRootTaskDateRange = (rootIds: string[]) => {
+            const getVersionTaskDateRange = (rootIds: string[], includeDescendants: boolean) => {
                 let minStart: number | undefined;
                 let maxDue: number | undefined;
 
-                rootIds.forEach(rootId => {
-                    const task = nodeMap.get(rootId)?.task;
-                    if (!task) return;
+                const pending = [...rootIds];
+                while (pending.length > 0) {
+                    const node = nodeMap.get(pending.pop()!);
+                    if (!node) continue;
+                    const { task, children } = node;
+                    if (includeDescendants) {
+                        for (const child of children) pending.push(child);
+                    }
 
                     if (task.startDate !== undefined && Number.isFinite(task.startDate)) {
                         minStart = minStart === undefined ? task.startDate : Math.min(minStart, task.startDate);
@@ -390,7 +395,7 @@ export const buildLayout = (
                     if (task.dueDate !== undefined && Number.isFinite(task.dueDate)) {
                         maxDue = maxDue === undefined ? task.dueDate : Math.max(maxDue, task.dueDate);
                     }
-                });
+                }
 
                 return { minStart, maxDue };
             };
@@ -399,33 +404,29 @@ export const buildLayout = (
                 version: {
                     id: string;
                     name: string;
-                    startDate?: number;
                     effectiveDate?: number;
+                    projectName?: string;
+                    status?: string;
                     ratioDone?: number;
                 },
                 versionRoots: string[]
             ) => {
                 const versionRowId = getVersionRowId(groupId, version.id);
                 const versionExpanded = versionExpansion[versionRowId] ?? versionExpansion[version.id] ?? true;
-                const rootTaskRange = getRootTaskDateRange(versionRoots);
-
-                const versionStart = Number.isFinite(version.startDate)
-                    ? version.startDate
-                    : rootTaskRange.minStart;
-                const versionDue = Number.isFinite(version.effectiveDate)
-                    ? version.effectiveDate
-                    : rootTaskRange.maxDue;
-
                 if (!hideDescendants) {
+                    const { minStart, maxDue } = getVersionTaskDateRange(versionRoots, version.id !== NO_VERSION_ID);
                     layoutRows.push({
                         type: 'version',
                         id: versionRowId,
                         versionId: version.id,
                         name: version.name,
                         rowIndex,
-                        startDate: versionStart,
-                        dueDate: versionDue,
+                        startDate: minStart,
+                        dueDate: maxDue,
                         ratioDone: version.ratioDone,
+                        release: version.effectiveDate !== undefined && Number.isFinite(version.effectiveDate)
+                            ? { date: version.effectiveDate, projectName: version.projectName, status: version.status }
+                            : undefined,
                         projectId: groupId
                     });
                     rowIndex += 1;
