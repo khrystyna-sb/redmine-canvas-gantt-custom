@@ -274,9 +274,9 @@ export class InteractionEngine {
         if (e.button === 2) return; // Ignore right-click
         if (this.isScrollInteractionLocked()) return;
 
-        // Ignore events from dependency handles (let/leave them for the Overlay handler)
+        // Let overlay controls handle their own pointer actions.
         const downTarget = e.target;
-        if (downTarget instanceof Element && downTarget.closest('.dependency-handle')) {
+        if (downTarget instanceof Element && downTarget.closest('.dependency-handle, [data-release-milestone]')) {
             return;
         }
 
@@ -559,6 +559,7 @@ export class InteractionEngine {
     };
 
     private handleContextMenu = (e: MouseEvent) => {
+        if (e.target instanceof Element && e.target.closest('[data-release-milestone]')) return;
         e.preventDefault();
         const { setContextMenu } = useTaskStore.getState();
         const rect = this.container.getBoundingClientRect();
