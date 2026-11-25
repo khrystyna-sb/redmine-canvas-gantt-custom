@@ -114,7 +114,7 @@ module RedmineCanvasGantt
       end
       return [] unless shared_versions
 
-      scope = Version.visible.where(id: shared_versions.select(:id))
+      scope = Version.visible.where(id: shared_versions.select(:id)).includes(:project)
       versions = if @data_payload_budget
                    @data_payload_budget.load_records(
                      scope,
@@ -132,6 +132,7 @@ module RedmineCanvasGantt
           start_date: version.try(:start_date),
           completed_percent: version.completed_percent,
           project_id: version.project_id,
+          project_name: version.project.name,
           status: version.status
         }
       end
