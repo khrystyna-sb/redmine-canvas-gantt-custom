@@ -47,7 +47,6 @@ type SetupOptions = {
   mockData?: MockData;
   onDataRequest?: (data: MockData, requestCount: number) => void;
   preferences?: Record<string, unknown>;
-  activeWorkStatusIds?: number[];
   onPatchTask?: (payload: unknown) => void;
   onCreateRelation?: (payload: unknown) => void;
   onUpdateRelation?: (relationId: string, payload: unknown) => void;
@@ -286,13 +285,12 @@ export const setupMockApp = async (page: Page, options?: SetupOptions) => {
     ...options?.preferences,
   };
 
-  await page.addInitScript(({ initialPreferences, activeWorkStatusIds }) => {
+  await page.addInitScript((initialPreferences) => {
     if (!localStorage.getItem('canvasGantt:preferences')) {
       localStorage.setItem('canvasGantt:preferences', JSON.stringify(initialPreferences));
     }
     (window as Window & { RedmineCanvasGantt?: unknown }).RedmineCanvasGantt = {
       projectId: 1,
-      activeWorkStatusIds,
       apiBase: '/projects/1/canvas_gantt',
       redmineBase: '',
       authToken: 'test-token',
@@ -333,7 +331,7 @@ export const setupMockApp = async (page: Page, options?: SetupOptions) => {
         test_mode: '1',
       },
     };
-  }, { initialPreferences: preferences, activeWorkStatusIds: options?.activeWorkStatusIds });
+  }, preferences);
 
   await page.route('**/canvas_gantt/queries.json', async (route) => {
     await route.fulfill({
