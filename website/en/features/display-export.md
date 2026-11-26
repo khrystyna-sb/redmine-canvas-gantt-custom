@@ -26,7 +26,9 @@ To show or hide the **Progress Line**, select it in the toolbar. This line start
 
 ### Status colors in the custom build
 
-In **Settings → Display**, choose **Status** under **Color by**. The **Status colors** legend lists your Redmine statuses, including custom statuses. Select a swatch to change its color or choose **Reset status colors** to restore the palette. Both PNG options use the chart’s selected colors. **Default** restores the original chart style.
+The custom build starts with active work when you open a view without a status filter or saved query. It shows Reopened, In Progress, Ready for Review, Ready for QA, and Blocked. Use the **Status** menu for another selection or choose **Active work** to restore the preset.
+
+In **Settings → Display**, choose **Status** under **Color by**. The **Status colors** legend lists your Redmine statuses, including custom statuses. The default palette uses muted gray for planned work, blue for work in progress and review, purple for QA, green for completed work, and amber for blocked work. Select a swatch to change its color or choose **Reset status colors** to restore the palette. Both PNG options use the chart’s selected colors. **Default** restores the original chart style.
 
 ### Issue dialog size
 

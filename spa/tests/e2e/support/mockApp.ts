@@ -47,6 +47,7 @@ type SetupOptions = {
   mockData?: MockData;
   onDataRequest?: (data: MockData, requestCount: number) => void;
   preferences?: Record<string, unknown>;
+  activeWorkStatusIds?: number[];
   onPatchTask?: (payload: unknown) => void;
   onCreateRelation?: (payload: unknown) => void;
   onUpdateRelation?: (relationId: string, payload: unknown) => void;
@@ -232,7 +233,7 @@ const deriveInitialState = (url: URL, data: MockData): Record<string, unknown> =
   return {
     ...(data.initial_state ?? {}),
     ...(queryId && /^\d+$/.test(queryId) ? { queryId: Number(queryId) } : {}),
-    ...(statusIds.length > 0 ? { selectedStatusIds: statusIds } : {}),
+    ...(statusIds.length > 0 ? { selected_status_ids: statusIds } : {}),
     ...(projectIds.length > 0 ? { selectedProjectIds: projectIds } : {}),
     ...(memberProjectsOnly ? { memberProjectsOnly: true } : {}),
   };
@@ -285,12 +286,13 @@ export const setupMockApp = async (page: Page, options?: SetupOptions) => {
     ...options?.preferences,
   };
 
-  await page.addInitScript((initialPreferences) => {
+  await page.addInitScript(({ initialPreferences, activeWorkStatusIds }) => {
     if (!localStorage.getItem('canvasGantt:preferences')) {
       localStorage.setItem('canvasGantt:preferences', JSON.stringify(initialPreferences));
     }
     (window as Window & { RedmineCanvasGantt?: unknown }).RedmineCanvasGantt = {
       projectId: 1,
+      activeWorkStatusIds,
       apiBase: '/projects/1/canvas_gantt',
       redmineBase: '',
       authToken: 'test-token',
@@ -331,7 +333,7 @@ export const setupMockApp = async (page: Page, options?: SetupOptions) => {
         test_mode: '1',
       },
     };
-  }, preferences);
+  }, { initialPreferences: preferences, activeWorkStatusIds: options?.activeWorkStatusIds });
 
   await page.route('**/canvas_gantt/queries.json', async (route) => {
     await route.fulfill({

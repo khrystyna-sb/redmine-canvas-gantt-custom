@@ -174,6 +174,7 @@ declare global {
     interface Window {
         RedmineCanvasGantt?: {
             projectId: number;
+            activeWorkStatusIds?: number[];
             projectPath?: string;
             issueListPath?: string;
             newIssuePath?: string;

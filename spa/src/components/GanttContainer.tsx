@@ -25,6 +25,7 @@ import { exportTasksAsCsv } from '../export/csv';
 import { exportSnapshotAsPng } from '../export/png';
 import { exportFullRangePng } from '../export/fullPng';
 import { todayCalendarDate } from '../utils/dateOnly';
+import { getStatusColor } from '../utils/statusColors';
 import type { GanttExportHandle, GanttExportSnapshot } from '../export/types';
 import type { TimelineHeaderHandle } from './TimelineHeader';
 import { i18n } from '../utils/i18n';
@@ -81,7 +82,12 @@ export const GanttContainer = React.forwardRef<GanttExportHandle>((_, ref) => {
     const showProgressLine = useUIStore(state => state.showProgressLine);
     const showTaskTitles = useUIStore(state => state.showTaskTitles);
     const showTaskBarDates = useUIStore(state => state.showTaskBarDates);
-    const statusColors = useUIStore(state => state.taskColorMode === 'status' ? state.statusColors : undefined);
+    const statusOverrides = useUIStore(state => state.taskColorMode === 'status' ? state.statusColors : undefined);
+    const taskStatuses = useTaskStore(state => state.taskStatuses);
+    const statusColors = useMemo(() => statusOverrides && {
+        ...statusOverrides,
+        ...Object.fromEntries(taskStatuses.map(status => [status.id, getStatusColor(status.id, statusOverrides, status)])),
+    }, [statusOverrides, taskStatuses]);
     const showPointsOrphans = useUIStore(state => state.showPointsOrphans);
     const showStartDateOnly = useUIStore(state => state.showStartDateOnly);
     const showDueDateOnly = useUIStore(state => state.showDueDateOnly);

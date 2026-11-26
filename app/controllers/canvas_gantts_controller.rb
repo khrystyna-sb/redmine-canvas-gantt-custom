@@ -252,6 +252,7 @@ class CanvasGanttsController < ApplicationController
     field_spent_hours: :label_spent_time,
     field_version: :field_fixed_version,
     label_all_select: :label_all_select,
+    label_status_active_work: :label_status_active_work,
     label_status_completed: :label_status_completed,
     label_status_incomplete: :label_status_incomplete,
     label_assigned_to_filter: :label_assigned_to_filter,
@@ -642,6 +643,8 @@ class CanvasGanttsController < ApplicationController
   end
 
   # GET /projects/:project_id/canvas_gantt
+  ACTIVE_WORK_STATUS_NAMES = ['reopened', 'in progress', 'ready for review', 'ready for qa', 'blocked'].freeze
+
   def index
     @language = (User.current.language.presence || Setting.default_language).to_s
     I18n.with_locale(@language) do
@@ -650,6 +653,9 @@ class CanvasGanttsController < ApplicationController
       @year_month_format = canvas_gantt_l(:year_month_format)
     end
     @settings = plugin_settings
+    @active_work_status_ids = IssueStatus.sorted.filter_map do |status|
+      status.id if ACTIVE_WORK_STATUS_NAMES.include?(status.name.strip.downcase)
+    end
     @non_working_week_days = normalized_non_working_week_days
   end
 

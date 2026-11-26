@@ -4,25 +4,27 @@
 
 ## Що додано в нашій збірці
 
-Гілка за замовчуванням **`custom`** (`0.20.0-custom.1`, на базі `b272f91`) містить **Color by Status**. У **Settings → Display → Color by → Status** можна забарвити смуги задач за статусами Redmine, зокрема користувацькими. Кольори змінюються в легенді, зберігаються в браузері й використовуються в обох PNG-експортах.
+Гілка за замовчуванням **`custom`** містить збірку `0.20.0-custom.1` на базі Canvas Gantt `b272f91`.
 
-## Окремі тестові гілки
+- **Color by Status.** У **Settings → Display → Color by → Status** діє оновлена палітра. **Reopened**, **In Progress** і **Ready for Review** мають спільний м’який синій колір, **Ready for QA** — фіолетовий, **Blocked** — бурштиновий. Для цих кольорів використано домішку 30% білого. Палітра підтримує користувацькі статуси й застосовується в обох PNG-експортах. Кольори, змінені в легенді, зберігаються в браузері. Щоб повернути оновлені стандартні кольори поверх збережених, натисніть **Reset status colors**.
+- **Active work.** У меню **Status** ця добірка вибирає ті самі п’ять статусів. Вона застосовується при відкритті діаграми без збереженого запиту чи явного або збереженого фільтра статусів.
 
-| Гілка | Збірка | Що додано |
-| --- | --- | --- |
-| [`preview/status-palette`](https://github.com/khrystyna-sb/redmine-canvas-gantt-custom/tree/preview/status-palette) | `0.20.0-custom.1` | Палітра статусів поверх `custom`. **Reopened**, **In Progress** і **Ready for Review** мають спільний синій колір, **Ready for QA** — фіолетовий, **Blocked** — бурштиновий. **Status → Active work** вибирає ці п’ять статусів. Добірка застосовується при відкритті діаграми, якщо немає збереженого запиту, явного фільтра статусів чи збереженого вибору статусів. [README гілки](https://github.com/khrystyna-sb/redmine-canvas-gantt-custom/blob/preview/status-palette/README.md#installation) |
-| [`feature/release-milestones-019`](https://github.com/khrystyna-sb/redmine-canvas-gantt-custom/tree/feature/release-milestones-019) | `0.19.1.release.1`, на базі `v0.19.0` | У рядку **Target version** синій ромб із датою показує дедлайн версії з Redmine. Натискання відкриває версію. Зелена смуга показує діапазон дат задач і підзадач. Маркер залишається, коли рядок версії згорнуто. [README гілки](https://github.com/khrystyna-sb/redmine-canvas-gantt-custom/blob/feature/release-milestones-019/README.md) |
+<a id="окремі-тестові-гілки"></a>
 
-Кожна гілка встановлюється окремо в `plugins/redmine_canvas_gantt`. У `custom` і `preview/status-palette` однакова версія плагіна, тому для ідентифікації збірки записуйте гілку та SHA коміту.
+## Тестова гілка дедлайнів релізів
+
+`feature/release-milestones-019` містить окрему збірку `0.19.1.release.1` на базі `v0.19.0`. У рядку **Target version** синій ромб із датою показує дедлайн версії з Redmine і відкриває її. Зелена смуга показує діапазон дат задач і підзадач. Маркер залишається, коли рядок версії згорнуто. [README гілки](https://github.com/khrystyna-sb/redmine-canvas-gantt-custom/blob/feature/release-milestones-019/README.md)
+
+Встановлюйте потрібну збірку в `plugins/redmine_canvas_gantt`. Для ідентифікації збірки записуйте гілку та SHA коміту.
 
 <a id="installation"></a><a id="requirements"></a><a id="supported-browsers"></a><a id="security-and-impact"></a><a id="enable-canvas-gantt-in-a-project"></a><a id="встановлення-гілки-custom-через-git"></a>
 
 ## Встановлення через Git
 
-Потрібні Git і доступ на читання приватного репозиторію. Зібраний інтерфейс є в усіх трьох гілках. Для встановлення достатньо файлів із Git, без Node.js і міграцій БД.
+Потрібні Git і доступ на читання приватного репозиторію. Зібраний інтерфейс є в обох збірках. Для встановлення достатньо файлів із Git, без Node.js і міграцій БД.
 
 1. На тестовому стенді зупиніть Redmine, зробіть резервну копію БД і перемістіть наявний каталог плагіна за межі `plugins/` для відкату.
-2. З кореня Redmine виконайте команди. У `branch` вкажіть потрібну гілку з README.
+2. З кореня Redmine виконайте команди. Для збірки з дедлайнами замініть `custom` на `feature/release-milestones-019`.
 
    ```sh
    branch='custom'
@@ -57,10 +59,10 @@ git -C plugins/redmine_canvas_gantt status --short
 
 ## Перевірка на тестовому стенді
 
-Для `custom` і `feature/release-milestones-019` перевірки проводили на Redmine `6.1.1.stable`. Палітру та фільтр `preview/status-palette` перевірили в Chrome з тестовими задачами.
+Базову збірку `0.20.0-custom.1` і гілку дедлайнів перевіряли на Redmine `6.1.1.stable`. Оновлену палітру та **Active work** перевіряли в Chrome з тестовими задачами.
 
 - Під звичайною роллю відкрийте діаграму, збережений запит і збережіть зміну тестової задачі. Перед перенесенням на робочий Redmine перевірте SSO та спільні запити через Query Share, якщо вони використовуються.
-- **`custom` / `preview/status-palette`.** Увімкніть **Color by Status**, змініть колір, оновіть сторінку та перевірте **Export PNG** і **Export full PNG**. У `preview/status-palette` додатково перевірте **Status → Active work** і відкрийте збережений запит із власним фільтром статусів.
+- **`custom`.** Увімкніть **Color by Status**, перевірте оновлену палітру в діаграмі, **Export PNG** і **Export full PNG**. Перевірте **Status → Active work** і відкрийте збережений запит із власним фільтром статусів.
 - **`feature/release-milestones-019`.** Увімкніть **Show version headers** і відкрийте версію з датою релізу. Згорніть задачі та відкрийте версію за маркером. Змініть дату версії в Redmine й оновіть діаграму. Маркер має переміститися, а діапазон дат задач має лишитися тим самим.
 
 <a id="demo"></a><a id="usage"></a><a id="work-timer"></a><a id="workload-display-settings-and-export"></a><a id="shared-views-filters-and-query-parameters"></a>

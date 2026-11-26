@@ -808,6 +808,7 @@ const showDisplaySettingsMenu = isMenuOpen('displaySettings');
         [taskStatuses]
     );
     const allStatusIds = React.useMemo(() => taskStatuses.map((status: TaskStatus) => status.id), [taskStatuses]);
+    const activeWorkStatusIds = window.RedmineCanvasGantt?.activeWorkStatusIds ?? [];
     const allStatusesState = resolveCheckboxState(allStatusIds, selectedStatusIds);
     const completedStatusesState = resolveCheckboxState(closedStatusIds, selectedStatusIds);
     const incompleteStatusesState = resolveCheckboxState(openStatusIds, selectedStatusIds);
@@ -1825,6 +1826,25 @@ const showDisplaySettingsMenu = isMenuOpen('displaySettings');
                             }}
                         >
                             <div style={{ fontWeight: 600, marginBottom: '8px', color: designTokens.controlFg }}>{i18n.t('field_status') || 'Status'}</div>
+                            {activeWorkStatusIds.length > 0 && (
+                                <button
+                                    type="button"
+                                    aria-pressed={selectedStatusIds.length === activeWorkStatusIds.length &&
+                                        activeWorkStatusIds.every(id => selectedStatusIds.includes(id))}
+                                    onClick={() => setSelectedStatusFromServer(activeWorkStatusIds)}
+                                    style={{
+                                        display: 'block',
+                                        marginBottom: '4px',
+                                        padding: '4px 0',
+                                        border: 'none',
+                                        background: 'transparent',
+                                        color: designTokens.controlActiveFg,
+                                        cursor: 'pointer',
+                                    }}
+                                >
+                                    {i18n.t('label_status_active_work') || 'Active work'}
+                                </button>
+                            )}
                             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', color: designTokens.controlFg, cursor: 'pointer', borderBottom: `1px solid ${designTokens.borderSubtle}`, marginBottom: '8px' }}>
                                 <input
                                     ref={selectAllStatusesRef}
