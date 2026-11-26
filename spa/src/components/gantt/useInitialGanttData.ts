@@ -7,7 +7,6 @@ import type { Viewport } from '../../types';
 import { replaceIssueQueryParamsInUrl, resolveInitialSharedQueryState } from '../../utils/queryParams';
 import { loadLastUsedSharedQueryProjectState } from '../../utils/sharedQueryState';
 import { resolvedQueryStateFromProjectState } from '../../query/queryStateCodec';
-import { setStatusOverride } from '../../query/queryState';
 import { fromLocalDate, toCalendarDate, toTimelineDate, todayCalendarDate } from '../../utils/dateOnly';
 
 type Params = {
@@ -31,27 +30,12 @@ export const useInitialGanttData = ({
                 window.location.search,
                 storedProjectState ? resolvedQueryStateFromProjectState(storedProjectState) : undefined
             );
-            const storedQueryContext = initialSharedQueryState.source === 'storage'
+            const initialQueryContext = initialSharedQueryState.source === 'storage'
                 ? storedProjectState?.queryContext
                 : undefined;
-            const activeWorkStatusIds = window.RedmineCanvasGantt?.activeWorkStatusIds ?? [];
-            const urlParams = new URLSearchParams(window.location.search);
-            const hasStatusFilterInUrl = ['status_id', 'status_id[]', 'status_ids', 'status_ids[]', 'op[status_id]']
-                .some(key => urlParams.has(key));
-            const canApplyActiveWork = activeWorkStatusIds.length > 0 &&
-                !initialSharedQueryState.state.queryId &&
-                initialSharedQueryState.state.selectedStatusIds === undefined &&
-                !storedProjectState?.queryContext.overrides.status &&
-                !hasStatusFilterInUrl;
-            const viewState = canApplyActiveWork
-                ? { ...initialSharedQueryState.state, selectedStatusIds: activeWorkStatusIds }
-                : initialSharedQueryState.state;
-            const initialQueryContext = canApplyActiveWork && storedQueryContext
-                ? setStatusOverride(storedQueryContext, { mode: 'subset', values: activeWorkStatusIds })
-                : storedQueryContext;
 
             if (initialSharedQueryState.source === 'storage') {
-                replaceIssueQueryParamsInUrl(viewState, initialQueryContext);
+                replaceIssueQueryParamsInUrl(initialSharedQueryState.state, initialQueryContext);
             }
 
             if (
@@ -82,8 +66,8 @@ export const useInitialGanttData = ({
 
             const memberProjectsOnly = useTaskStore.getState().memberProjectsOnly;
             const initialApiQuery = memberProjectsOnly
-                ? { ...viewState, memberProjectsOnly: true }
-                : viewState;
+                ? { ...initialSharedQueryState.state, memberProjectsOnly: true }
+                : initialSharedQueryState.state;
             const initialRawSearch = initialSharedQueryState.source === 'url'
                 ? window.location.search
                 : undefined;
@@ -92,16 +76,13 @@ export const useInitialGanttData = ({
                     const params = new URLSearchParams(initialRawSearch);
                     params.delete('member_projects_only');
                     if (memberProjectsOnly) params.set('member_projects_only', '1');
-                    if (canApplyActiveWork) {
-                        activeWorkStatusIds.forEach(id => params.append('status_ids[]', String(id)));
-                    }
                     return `?${params.toString()}`;
                 })()
                 : initialRawSearch;
 
-            const hasExplicitInitialState = initialSharedQueryState.source !== 'default' || canApplyActiveWork;
+            const hasExplicitInitialState = initialSharedQueryState.source !== 'default';
             const initialState = hasExplicitInitialState
-                ? viewState
+                ? initialSharedQueryState.state
                 : undefined;
 
             await useTaskStore.getState().loadInitialData({
