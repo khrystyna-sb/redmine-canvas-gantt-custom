@@ -26,7 +26,7 @@ To show or hide the **Progress Line**, select it in the toolbar. This line start
 
 ### Status colors in the custom build
 
-In **Settings → Display**, choose **Status** under **Color by**. The **Status colors** legend lists your Redmine statuses, including custom statuses. The default palette uses muted gray for planned work, blue for work in progress and review, purple for QA, green for completed work, and amber for blocked work. Select a swatch to change its color or choose **Reset status colors** to restore the palette. Both PNG options use the chart’s selected colors. **Default** restores the original chart style.
+In **Settings → Display**, choose **Status** under **Color by**. The **Status colors** legend lists your Redmine statuses, including custom statuses. The default palette uses muted gray for planned work, blue for work in progress and review, purple for QA, green for completed work, and amber for blocked work. Select a swatch to change its color or choose **Reset status colors** to restore the palette. The completed portion is green, with the status color visible along the top edge even at 100%. Both PNG options use the same display. **Default** restores the original chart style.
 
 ### Issue dialog size
 
