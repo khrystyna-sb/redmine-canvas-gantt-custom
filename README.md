@@ -4,6 +4,8 @@
 
 Canvas Gantt Custom `0.20.0-custom.1` extends the upstream Canvas-based Gantt plugin for Redmine 6.0, 6.1, and 7.0. It is based on upstream commit `b272f91`. The linked public manuals describe upstream releases.
 
+[Встановлення з GitHub](#installation) · [Оновлення](#upgrade) · [Відкат](#rollback) · [Перевірка після встановлення](#verification)
+
 [English user manual](https://tiohsa.github.io/redmine_canvas_gantt/en/) · [日本語マニュアル](https://tiohsa.github.io/redmine_canvas_gantt/ja/) · [Developer guide](spa/README.md)
 
 Use the manual's navigation for detailed feature, setup, and administration guidance.
@@ -43,7 +45,8 @@ View and edit project issues on a Gantt chart, with a task list beside the timel
 
 ## Custom features
 
-- **Color by Status** uses Redmine status IDs, including custom statuses. The legend lets you change each color. Gantt PNG exports use the current palette.
+- **Color by Status** uses Redmine status IDs, including custom statuses. Reopened, In Progress, and Ready for Review share one blue. Ready for QA is purple, and Blocked is amber. The active-work colors are lightened with 30% white. The legend lets you change each color, and both PNG exports use the selected palette.
+- **Active work** shows Reopened, In Progress, Ready for Review, Ready for QA, and Blocked when the view opens without a status selection or saved query. Use the **Status** menu to change the selection or choose **Active work** to restore it.
 - **Workload Heatmap** shows planned hours by assignee and date with capacity-based colors. Set a daily threshold for each assignee in the Workload menu.
 - **Hide Actual** hides time-entry bars, totals, and related indicators while planned hours continue to be calculated.
 
@@ -73,17 +76,63 @@ No database migration is required. Access requires `view_canvas_gantt`; baseline
 
 ## Installation
 
-1. Extract the custom ZIP to a staging location. Confirm the top-level directory is `redmine_canvas_gantt` and contains `init.rb` and `assets/build/.vite/manifest.json`.
-2. Place that directory in `<redmine>/plugins/` and restart Redmine. The ZIP includes the compiled frontend. This plugin version needs no database migration.
-3. Enable the REST API and the Canvas Gantt project module. Grant `view_canvas_gantt` to the appropriate roles and open Canvas Gantt from the project menu.
+Для тестування кольорів використовуйте гілку **`preview/status-palette`**. Потрібні Git на сервері й доступ на читання до приватного репозиторію. Файли інтерфейсу вже зібрані. Для цієї збірки встановлювати Node.js або запускати міграції бази даних не потрібно.
+
+1. На тестовому стенді зупиніть Redmine й зробіть резервну копію бази даних. Якщо Canvas Gantt уже встановлено, збережіть його каталог і перемістіть його за межі `plugins/`.
+2. З кореневого каталогу Redmine виконайте:
+
+   ```sh
+   git clone --branch preview/status-palette --single-branch \
+     https://github.com/khrystyna-sb/redmine-canvas-gantt-custom.git \
+     plugins/redmine_canvas_gantt
+
+   git -C plugins/redmine_canvas_gantt rev-parse HEAD
+   test -f plugins/redmine_canvas_gantt/init.rb
+   test -f plugins/redmine_canvas_gantt/assets/build/.vite/manifest.json
+   ```
+
+   Запишіть SHA, який показав Git. Якщо Redmine працює в Docker, клонуйте плагін у каталог на хості, який монтується як `plugins/redmine_canvas_gantt`.
+3. Запустіть Redmine штатним способом. У **Administration → Plugins** перевірте, що Canvas Gantt доступний і має версію `0.20.0-custom.1`.
+4. Увімкніть REST API в **Administration → Settings → API**. У потрібному проєкті увімкніть модуль **Canvas Gantt** через **Settings → Modules**. Для ролей, які мають бачити діаграму, увімкніть право **View Canvas Gantt** (`view_canvas_gantt`) в **Administration → Roles and permissions**.
 
 ### Upgrade
 
-Back up the Redmine database and the existing plugin directory. Stop Redmine, move the existing `redmine_canvas_gantt` directory outside `plugins/`, and put the extracted directory in its place. Restart Redmine so it refreshes plugin assets. Check the registered plugin version, permissions, the Gantt view, and PNG export on a test project before broader use.
+Для переходу зі збірки, встановленої з ZIP або іншого джерела, виконайте [першу установку](#installation) зі збереженням попереднього каталогу. Для наступного оновлення цієї ж гілки зупиніть Redmine, зробіть резервну копію та збережіть поточний SHA:
+
+```sh
+git -C plugins/redmine_canvas_gantt rev-parse HEAD
+git -C plugins/redmine_canvas_gantt status --short
+```
+
+Якщо `git status` показує локальні зміни, спершу збережіть їх. Коли робочий каталог чистий, виконайте:
+
+```sh
+git -C plugins/redmine_canvas_gantt switch preview/status-palette
+git -C plugins/redmine_canvas_gantt pull --ff-only origin preview/status-palette
+git -C plugins/redmine_canvas_gantt rev-parse HEAD
+```
+
+Запустіть Redmine й повторіть [перевірку після встановлення](#verification).
 
 ### Rollback
 
-Stop Redmine and move the custom plugin directory outside `plugins/`. Restore the previous plugin directory at the original path and restart Redmine. Keep the existing Redmine plugin settings to preserve saved baselines. Run the uninstall task only for permanent removal.
+Зупиніть Redmine. Якщо замінювали попередній каталог плагіна, поверніть його під назвою `plugins/redmine_canvas_gantt`. Після Git-оновлення поверніться на SHA, збережений перед оновленням:
+
+```sh
+git -C plugins/redmine_canvas_gantt switch --detach ПОПЕРЕДНІЙ_SHA
+```
+
+Запустіть Redmine і перевірте відкриття діаграми. Збережіть запис налаштувань плагіна в Redmine, щоб зберегти базові плани. Завдання `redmine_canvas_gantt:uninstall` призначене для повного видалення.
+
+<a id="verification"></a>
+
+### Перевірка після встановлення
+
+- Відкрийте **Canvas Gantt** під звичайним учасником проєкту. У вигляді без збереженого запиту чи вибраного фільтра перевірте п’ять активних статусів. **Status → Active work** відновлює цю добірку.
+- Увімкніть **Settings → Display → Color by → Status**. Перевірте спільний синій колір для In Progress і Ready for Review, фіолетовий для Ready for QA і бурштиновий для Blocked. Змініть один колір і оновіть сторінку. Переконайтеся, що вибраний колір зберігся.
+- Завантажте **Export PNG** і **Export full PNG**. Обидва файли мають показувати вибрані кольори. У режимі **Default** перевірте зелений відрізок виконаного відсотка.
+
+Палітру та фільтр цієї гілки перевірено в Chrome з вигаданими задачами. Перед ширшим використанням повторіть ці кроки на вашій версії Redmine з установленими плагінами.
 
 ### Uninstall
 
