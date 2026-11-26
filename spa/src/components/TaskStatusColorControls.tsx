@@ -20,11 +20,11 @@ export function TaskStatusColorControls() {
             {taskColorMode === 'status' && statuses.length > 0 && (
                 <fieldset style={{ margin: 0, border: `1px solid ${designTokens.borderSubtle}`, borderRadius: 6 }}>
                     <legend>{i18n.t('label_status_color_legend') || 'Status colors'}</legend>
-                    {statuses.map(({ id, name }) => (
-                        <label key={id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                            {name}
-                            <input type="color" value={getStatusColor(id, statusColors)}
-                                onChange={event => setStatusColor(id, event.target.value)} />
+                    {statuses.map(status => (
+                        <label key={status.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                            {status.name}
+                            <input type="color" value={getStatusColor(status.id, statusColors, status)}
+                                onChange={event => setStatusColor(status.id, event.target.value)} />
                         </label>
                     ))}
                     <button type="button" disabled={!Object.keys(statusColors).length} onClick={resetStatusColors}>
