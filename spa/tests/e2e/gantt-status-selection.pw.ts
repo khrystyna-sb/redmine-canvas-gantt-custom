@@ -7,11 +7,9 @@ const statuses = [
 ].map((name, index) => ({
   id: index + 1, name, is_closed: ['Done', 'Archive', 'Closed', 'Rejected'].includes(name),
 }));
-const activeWorkStatusIds = [4, 5, 6, 7, 12];
 
 test.beforeEach(async ({ page }) => {
   await setupMockApp(page, {
-    activeWorkStatusIds,
     mockData: {
       ...defaultMockData,
       relations: [],
@@ -27,23 +25,21 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test('starts with active work and restores the preset after an explicit status selection', async ({ page }) => {
+test('opens without a preset and restores manually selected statuses after reload', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByTestId('cell-104-subject')).toBeVisible();
   for (const { id } of statuses) {
-    const task = page.getByTestId('cell-' + (100 + id) + '-subject');
-    if (activeWorkStatusIds.includes(id)) await expect(task).toBeVisible();
-    else await expect(task).toHaveCount(0);
+    await expect(page.getByTestId('cell-' + (100 + id) + '-subject')).toBeVisible();
   }
+
   await page.getByTitle('Status', { exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Active work' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Active work', exact: true })).toHaveCount(0);
   await page.getByLabel('To do', { exact: true }).check();
   await expect(page.getByTestId('cell-102-subject')).toBeVisible();
+  await expect(page.getByTestId('cell-105-subject')).toHaveCount(0);
+
   await page.reload();
   await expect(page.getByTestId('cell-102-subject')).toBeVisible();
-  await page.getByTitle('Status', { exact: true }).click();
-  await page.getByRole('button', { name: 'Active work' }).click();
-  await expect(page.getByTestId('cell-102-subject')).toHaveCount(0);
+  await expect(page.getByTestId('cell-105-subject')).toHaveCount(0);
 });
 
 test('honors an explicit status in the shared URL', async ({ page }) => {
