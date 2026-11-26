@@ -73,6 +73,37 @@ describe('TaskRenderer', () => {
         expect(colors).toEqual(['#123456', '#abcdef']);
     });
 
+    it.each([0, 35, 100])('preserves the status color while showing %i percent in green', (ratioDone) => {
+        const ctx = buildContext();
+        const barColors: string[] = [];
+        const progressColors: string[] = [];
+        vi.mocked(ctx.fill).mockImplementation(() => { barColors.push(String(ctx.fillStyle)); });
+        vi.mocked(ctx.fillRect).mockImplementation(() => { progressColors.push(String(ctx.fillStyle)); });
+        const canvas = { width: 800, height: 600, getContext: () => ctx } as unknown as HTMLCanvasElement;
+
+        new TaskRenderer(canvas).render(
+            { ...viewport, scale: 30 / ONE_DAY }, [{ ...buildTask(), ratioDone }],
+            1, 2, [], [], false, false, true, null, false, true, true,
+            addCalendarDays(TEST_START_DATE, -1), { 1: '#658ede' }
+        );
+
+        expect(barColors).toEqual(['#658ede']);
+        if (ratioDone === 0) {
+            expect(progressColors).toEqual([]);
+            return;
+        }
+
+        const [x, y, width, height] = vi.mocked(ctx.rect).mock.calls[0];
+        const [progressX, progressY, progressWidth, progressHeight] = vi.mocked(ctx.fillRect).mock.calls[0];
+        expect(progressColors).toEqual(['#50c878']);
+        expect(ctx.clip).toHaveBeenCalledOnce();
+        expect(progressX).toBe(x);
+        expect(progressWidth).toBe(Math.floor(width * ratioDone / 100));
+        expect(progressY).toBeGreaterThan(y);
+        expect(progressHeight).toBeGreaterThan(height / 2);
+        expect(progressY + progressHeight).toBe(y + height);
+    });
+
     it('aligns project and version summaries to calendar cell boundaries', () => {
         const ctx = buildContext();
         const canvas = {

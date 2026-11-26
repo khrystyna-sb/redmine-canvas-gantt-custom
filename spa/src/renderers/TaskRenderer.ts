@@ -372,11 +372,14 @@ export class TaskRenderer {
         }
         ctx.fill();
 
-        // 2. Progress Bar - Green theme
+        // 2. Green progress fill with a visible status color along the top.
         if (progressWidth > 0 && statusColor) {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
-            const progressHeight = Math.min(2, currentBarHeight);
-            ctx.fillRect(baseX, barY + (currentBarHeight - progressHeight) / 2, progressWidth, progressHeight);
+            const statusHeight = Math.min(3, Math.floor(currentBarHeight / 3));
+            ctx.save();
+            ctx.clip();
+            ctx.fillStyle = TaskRenderer.DONE_GREEN;
+            ctx.fillRect(baseX, barY + statusHeight, progressWidth, currentBarHeight - statusHeight);
+            ctx.restore();
         } else if (progressWidth > 0) {
             ctx.fillStyle = TaskRenderer.DONE_GREEN;
             ctx.beginPath();
